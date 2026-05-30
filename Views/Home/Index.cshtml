@@ -1,0 +1,90 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+    var userName = Context.Session.GetString("UserName") ?? "Guest";
+    var userRole = Context.Session.GetString("UserRole") ?? "";
+    var userEmail = Context.Session.GetString("UserEmail");
+}
+
+@if (userEmail == null)
+{
+    <div class="text-center py-5">
+        <div class="home-logo-section mb-4">
+            <img src="~/images/logo.png" alt="Hospital OP Booking" class="home-logo" />
+        </div>
+        <h1 class="mt-3 fw-bold mb-2">Hospital OP Booking System</h1>
+        <p class="text-muted lead mb-4">Easy Appointment Scheduling</p>
+        <div class="mt-4 d-flex gap-3 justify-content-center flex-wrap">
+            <a asp-controller="Account" asp-action="Login" class="btn btn-primary btn-lg px-5">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+            </a>
+            <a asp-controller="Account" asp-action="RegisterPatient" class="btn btn-outline-primary btn-lg px-5">
+                <i class="bi bi-person-plus me-2"></i>Register as Patient
+            </a>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        <!-- Welcome Card -->
+        <div class="col-12">
+            <div class="card border-0 rounded-4 bg-gradient text-white" style="background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); box-shadow: 0 8px 24px rgba(13,110,253,0.3);">
+                <div class="card-body p-5 d-flex align-items-center gap-4 flex-wrap">
+                    <div class="rounded-circle bg-white bg-opacity-20 d-flex align-items-center justify-content-center"
+                         style="width:70px;height:70px;flex-shrink:0; box-shadow: 0 4px 12px rgba(255,255,255,0.2);">
+                        <i class="bi @(userRole == "Hospital" ? "bi-building-fill-cross" : "bi-person-circle") fs-2 text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-0 fw-bold">
+                            <i class="bi bi-hand-thumbs-up me-2"></i>Welcome, @userName!
+                        </h3>
+                        <p class="mb-0 opacity-85 mt-1">
+                            <i class="bi bi-shield-check me-1"></i>Logged in as <span class="badge bg-white text-primary fw-semibold">@userRole</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="col-sm-6 col-lg-3">
+            <div class="card border-0 rounded-4 h-100" style="box-shadow: 0 6px 20px rgba(13,110,253,0.12); transition: all 0.3s ease;">
+                <div class="card-body text-center p-4">
+                    <div class="text-primary mb-3"><i class="bi bi-calendar-check fs-1"></i></div>
+                    <h5 class="fw-bold mb-2">Appointments</h5>
+                    <p class="text-muted small mb-0"><i class="bi bi-arrow-right me-1"></i>View &amp; manage your OP appointments</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-3">
+            <div class="card border-0 rounded-4 h-100" style="box-shadow: 0 6px 20px rgba(25,135,84,0.12); transition: all 0.3s ease;">
+                <div class="card-body text-center p-4">
+                    <div style="color: #198754; font-size: 2.5rem;" class="mb-3"><i class="bi bi-clipboard2-pulse"></i></div>
+                    <h5 class="fw-bold mb-2">Medical Records</h5>
+                    <p class="text-muted small mb-0"><i class="bi bi-arrow-right me-1"></i>Access your health history</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-3">
+            <div class="card border-0 rounded-4 h-100" style="box-shadow: 0 6px 20px rgba(255,193,7,0.12); transition: all 0.3s ease;">
+                <div class="card-body text-center p-4">
+                    <div style="color: #ffc107; font-size: 2.5rem;" class="mb-3"><i class="bi bi-bell-fill"></i></div>
+                    <h5 class="fw-bold mb-2">Notifications</h5>
+                    <p class="text-muted small mb-0"><i class="bi bi-arrow-right me-1"></i>Stay updated on your bookings</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-3">
+            <div class="card border-0 rounded-4 h-100" style="box-shadow: 0 6px 20px rgba(23,162,184,0.12); transition: all 0.3s ease;">
+                <div class="card-body text-center p-4">
+                    <div style="color: #17a2b8; font-size: 2.5rem;" class="mb-3"><i class="bi bi-person-gear"></i></div>
+                    <h5 class="fw-bold mb-2">Profile</h5>
+                    <p class="text-muted small mb-0"><i class="bi bi-arrow-right me-1"></i>Update your account details</p>
+                </div>
+            </div>
+        </div>
+    </div>
+}

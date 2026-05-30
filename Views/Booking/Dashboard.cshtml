@@ -1,0 +1,179 @@
+@model HospitalOPBooking.Models.PatientDashboardViewModel
+@{
+    ViewData["Title"] = "Patient Dashboard";
+}
+
+<!-- Welcome Banner -->
+<div class="dash-banner mb-4">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+        <div class="dash-avatar"><i class="bi bi-person-circle"></i></div>
+        <div>
+            <h4 class="mb-0 fw-bold text-white">
+                <i class="bi bi-hand-thumbs-up me-2"></i>Welcome, @Model.PatientName!
+            </h4>
+            <p class="mb-0 text-white opacity-75 small"><i class="bi bi-calendar-heart me-1"></i>Book your outpatient appointment below</p>
+        </div>
+    </div>
+</div>
+
+<!-- ── My Bookings ── -->
+@if (Model.MyBookings.Any())
+{
+    <div class="section-title mb-4">
+        <i class="bi bi-calendar2-check-fill text-primary me-2"></i>
+        <span class="fw-bold">My Bookings</span>
+        <span class="badge bg-primary ms-2">@Model.MyBookings.Count</span>
+    </div>
+    <div class="row g-4 mb-4">
+        @foreach (var b in Model.MyBookings)
+        {
+            var isPast  = b.BookingDate.Date < DateTime.Today;
+            var isToday = b.BookingDate.Date == DateTime.Today;
+
+            <div class="col-sm-6 col-lg-4">
+                <div class="booking-card @(b.IsDone ? "booking-done" : isToday ? "booking-today" : isPast ? "booking-past" : "")">
+
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <span class="booking-hospital">
+                                <i class="bi bi-hospital-fill me-1"></i>@b.HospitalName
+                            </span>
+                        </div>
+                        <span class="token-badge @(b.IsDone ? "token-done-badge" : "")">
+                            <i class="bi bi-ticket-fill me-1"></i>Token #@b.TokenNumber
+                        </span>
+                    </div>
+
+                    <div class="booking-doctor">
+                        <i class="bi bi-person-badge me-1"></i><strong>Dr. @b.DoctorName</strong>
+                    </div>
+
+                    <div class="booking-date mt-2">
+                        <i class="bi bi-calendar3 me-1"></i>@b.BookingDate.ToString("dd MMM yyyy")
+                        @if (b.IsDone)
+                        {
+                            <span class="badge bg-success ms-1"><i class="bi bi-check-circle me-1"></i>Done</span>
+                        }
+                        else if (isToday)
+                        {
+                            <span class="badge bg-primary ms-1"><i class="bi bi-clock-fill me-1"></i>Today</span>
+                        }
+                        else if (isPast)
+                        {
+                            <span class="badge bg-secondary ms-1"><i class="bi bi-archive me-1"></i>Past</span>
+                        }
+                    </div>
+
+                    <!-- Queue status for today's pending bookings -->
+                    @if (isToday && !b.IsDone)
+                    {
+                        <div class="queue-status mt-3 mb-0">
+                            <i class="bi bi-people-fill me-1"></i>
+                            <strong>@b.DoneBeforeMe</strong> done before you &nbsp;·&nbsp;
+                            <i class="bi bi-ticket-fill me-1"></i><strong>#@b.TokenNumber</strong>
+                            @if (b.DoneBeforeMe == b.TokenNumber - 1)
+                            {
+                                <span class="badge bg-danger ms-1 blink"><i class="bi bi-exclamation-diamond-fill me-1"></i>You're Next!</span>
+                            }
+                        </div>
+                    }
+
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<!-- ── Hospital List ── -->
+<div class="section-title mb-4">
+    <i class="bi bi-hospital-fill text-primary me-2"></i>
+    <span class="fw-bold">Available Hospitals</span>
+    <span class="badge bg-primary ms-2">@Model.Hospitals.Count</span>
+</div>
+
+@if (!Model.Hospitals.Any())
+{
+    <div class="empty-state">
+        <div class="mb-3">
+            <i class="bi bi-building-slash"></i>
+        </div>
+        <p class="fw-semibold">No hospitals registered yet.</p>
+        <p class="text-muted small">Check back soon or contact support.</p>
+    </div>
+}
+else
+{
+    <div class="mb-4">
+        <div class="input-group">
+            <span class="input-group-text bg-white border-end-0">
+                <i class="bi bi-search text-muted"></i>
+            </span>
+            <input type="text" id="hospitalSearch" class="form-control border-start-0"
+                   placeholder="Search hospital or doctor…" />
+        </div>
+    </div>
+
+    <div class="row g-4" id="hospitalGrid">
+        @foreach (var h in Model.Hospitals)
+        {
+            <div class="col-sm-6 col-lg-4 hospital-item"
+                 data-name="@h.HospitalName.ToLower()"
+                 data-doctor="@h.DoctorName.ToLower()">
+                <div class="hosp-card @(h.PreviouslyBooked ? "hosp-card-pinned" : "")">
+                    @if (h.PreviouslyBooked)
+                    {
+                        <div class="pinned-label">
+                            <i class="bi bi-bookmark-star-fill me-1"></i>Previously Visited
+                        </div>
+                    }
+                    <div class="hosp-card-body">
+                        <div class="hosp-name">
+                            <i class="bi bi-hospital-fill me-1 text-primary"></i>@h.HospitalName
+                        </div>
+                        <div class="hosp-doctor mt-2">
+                            <i class="bi bi-person-badge me-1"></i>Dr. @h.DoctorName
+                        </div>
+                        <div class="hosp-address text-muted small mt-2">
+                            <i class="bi bi-geo-alt-fill me-1"></i>@h.Address
+                        </div>
+                        <div class="hosp-mobile text-muted small mt-1">
+                            <i class="bi bi-telephone-fill me-1"></i>@h.MobileNumber
+                        </div>
+                    </div>
+                    <div class="hosp-card-footer">
+                        @if (h.TodayBookingCount > 0)
+                        {
+                            <span class="op-count-badge">
+                                <i class="bi bi-people-fill me-1"></i>
+                                Today: <strong>@h.TodayBookingCount</strong> booked
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="op-count-badge op-count-empty">
+                                <i class="bi bi-calendar-check me-1"></i>No bookings today
+                            </span>
+                        }
+                        <a asp-controller="Booking" asp-action="Book"
+                           asp-route-hospitalId="@h.Id"
+                           class="btn btn-primary btn-sm book-btn">
+                            <i class="bi bi-calendar-plus me-1"></i>Book OP
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@section Scripts {
+<script>
+    document.getElementById('hospitalSearch').addEventListener('input', function () {
+        const q = this.value.toLowerCase().trim();
+        document.querySelectorAll('.hospital-item').forEach(el => {
+            const match = !q || el.dataset.name.includes(q) || el.dataset.doctor.includes(q);
+            el.style.display = match ? '' : 'none';
+        });
+    });
+</script>
+}

@@ -1,0 +1,720 @@
+@model HospitalOPBooking.Models.HospitalBookingViewModel
+@{
+    ViewData["Title"] = "Book for Patient";
+}
+
+<div class="book-wrapper">
+    <div class="book-card" style="max-width:640px">
+
+        <div class="book-header">
+            <a asp-controller="Hospital" asp-action="Dashboard" class="back-link">
+                <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
+            </a>
+            <h4 class="mt-2 mb-0 fw-bold">
+                <i class="bi bi-calendar-plus text-primary me-2"></i>Book OP for Patient
+            </h4>
+            <p class="text-muted small mb-0">@Model.HospitalName</p>
+        </div>
+
+        <form asp-action="BookForPatient" asp-controller="Hospital"
+              method="post" novalidate id="bookForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="HospitalId" />
+            <input type="hidden" asp-for="HospitalName" />
+            <input type="hidden" asp-for="ResolvedPatientId"   id="resolvedPatientId" />
+            <input type="hidden" asp-for="ResolvedPatientName" id="resolvedPatientName" />
+            <input type="hidden" asp-for="IsNewPatient"   id="isNewPatientField" />
+            <input type="hidden" name="FamilyMemberId"    id="FamilyMemberId" value="0" />
+
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+
+            <!-- ══ STEP 1: Patient ══ -->
+            <div class="step-section mb-4">
+                <div class="step-label"><span class="step-num">1</span> Find Patient</div>
+
+                <div class="patient-mode-toggle mb-3">
+                    <button type="button" id="btnExisting" class="mode-btn active" onclick="setMode(false)">
+                        <i class="bi bi-search me-1"></i>Existing Patient
+                    </button>
+                    <button type="button" id="btnNew" class="mode-btn" onclick="setMode(true)">
+                        <i class="bi bi-person-plus me-1"></i>New Patient
+                    </button>
+                </div>
+
+                <!-- Existing patient lookup -->
+                <div id="existingSection">
+                    <div class="input-group mb-2">
+                        <input asp-for="PatientIdentifier" class="form-control"
+                               placeholder="Mobile number or email…"
+                               id="patientIdentifier" autocomplete="off" />
+                        <button type="button" class="btn btn-primary" onclick="lookupPatient()">
+                            <i class="bi bi-search me-1"></i>Find
+                        </button>
+                    </div>
+                    <span asp-validation-for="PatientIdentifier" class="text-danger small"></span>
+
+                    <!-- Patient not found -->
+                    <div id="patientNotFound" class="patient-notfound-box d-none">
+                        <i class="bi bi-exclamation-triangle me-1"></i>
+                        No patient found with that mobile/email.
+                        <button type="button" class="btn btn-link btn-sm p-0 ms-1"
+                                onclick="setMode(true)">Register as new →</button>
+                    </div>
+
+                    <!-- Patient found card -->
+                    <div id="patientCard" class="patient-card d-none">
+                        <div class="patient-card-header">
+                            <div class="patient-card-avatar">
+                                <i class="bi bi-person-fill"></i>
+                            </div>
+                            <div>
+                                <div class="patient-card-name" id="patientFoundName"></div>
+                                <div class="patient-card-meta" id="patientFoundMeta"></div>
+                            </div>
+                        </div>
+
+                        <!-- Patient details (age, village, last booking) -->
+                        <div id="patientDetailsBox" class="mt-3 small" style="background: #f8f9fa; padding: 10px; border-radius: 6px; border-left: 3px solid #0d6efd;">
+                            <div class="d-flex flex-wrap gap-3">
+                                <div id="patientAgeBox" class="d-none">
+                                    <span class="text-muted"><i class="bi bi-calendar me-1"></i>Age:</span>
+                                    <strong id="patientAge"></strong> years
+                                </div>
+                                <div id="patientVillageBox" class="d-none">
+                                    <span class="text-muted"><i class="bi bi-geo-alt me-1"></i>Village:</span>
+                                    <strong id="patientVillage"></strong>
+                                </div>
+                                <div id="patientLastBookingBox" class="d-none">
+                                    <span class="text-muted"><i class="bi bi-calendar-check me-1"></i>Last Booking:</span>
+                                    <strong id="patientLastBooking"></strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Booking for selector -->
+                        <div class="mt-3">
+                            <div class="fw-semibold small mb-2">
+                                <i class="bi bi-people me-1 text-primary"></i>Booking for
+                            </div>
+                            <div id="bookingForChips" class="d-flex flex-wrap gap-2"></div>
+                        </div>
+
+                        <!-- Selected family member details -->
+                        <div id="selectedMemberDetailsBox" class="mt-3 small" style="background: #f8f9fa; padding: 10px; border-radius: 6px; border-left: 3px solid #28a745; display: none;">
+                            <div class="d-flex flex-wrap gap-3">
+                                <div id="memberAgeBox" class="d-none">
+                                    <span class="text-muted"><i class="bi bi-calendar me-1"></i>Age:</span>
+                                    <strong id="memberAge"></strong> years
+                                </div>
+                                <div id="memberRelationBox" class="d-none">
+                                    <span class="text-muted"><i class="bi bi-person me-1"></i>Relation:</span>
+                                    <strong id="memberRelation"></strong>
+                                </div>
+                                <div id="memberLastBookingBox" class="d-none">
+                                    <span class="text-muted"><i class="bi bi-calendar-check me-1"></i>Last Booking:</span>
+                                    <strong id="memberLastBooking"></strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Add family member inline -->
+                        <div class="mt-2">
+                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                    id="toggleAddFamily">
+                                <i class="bi bi-person-plus me-1"></i>Add Family Member
+                            </button>
+                        </div>
+                        <div id="addFamilyForm" class="new-patient-form mt-2 d-none">
+                            <div class="row g-2">
+                                <div class="col-sm-5">
+                                    <input type="text" id="fmName" class="form-control form-control-sm"
+                                           placeholder="Name *" maxlength="100" />
+                                </div>
+                                <div class="col-sm-2">
+                                    <input type="number" id="fmAge" class="form-control form-control-sm"
+                                           placeholder="Age" min="1" max="120" />
+                                </div>
+                                <div class="col-sm-3">
+                                    <input type="text" id="fmRelation" class="form-control form-control-sm"
+                                           placeholder="Relation" maxlength="50" />
+                                </div>
+                                <div class="col-sm-2 d-grid">
+                                    <button type="button" class="btn btn-success btn-sm"
+                                            onclick="saveFamilyMember()">
+                                        <i class="bi bi-check-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="fmError" class="text-danger small mt-1"></div>
+                        </div>
+                    </div>
+
+                    <!-- Validation return: show resolved patient -->
+                    @if (!string.IsNullOrEmpty(Model.ResolvedPatientName))
+                    {
+                        <div class="patient-found-box mt-2">
+                            <i class="bi bi-person-check-fill text-success me-1"></i>
+                            Patient: <strong>@Model.ResolvedPatientName</strong>
+                        </div>
+                    }
+                </div>
+
+                <!-- New patient form -->
+                <div id="newPatientSection" class="@(Model.IsNewPatient ? "" : "d-none")">
+                    <div class="new-patient-form">
+                        <div class="row g-3">
+                            <div class="col-sm-8">
+                                <label class="form-label fw-semibold small">Full Name <span class="text-danger">*</span></label>
+                                <input asp-for="NewPatientName" class="form-control" placeholder="Patient full name" />
+                                <span asp-validation-for="NewPatientName" class="text-danger small"></span>
+                            </div>
+                            <div class="col-sm-4">
+                                <label class="form-label fw-semibold small">Age <span class="text-danger">*</span></label>
+                                <input asp-for="NewPatientAge" class="form-control" type="number" min="1" max="120" placeholder="Age" />
+                                <span asp-validation-for="NewPatientAge" class="text-danger small"></span>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label fw-semibold small">Mobile <span class="text-danger">*</span></label>
+                                <input asp-for="NewPatientMobile" class="form-control" type="tel" maxlength="10" placeholder="10-digit mobile" />
+                                <span asp-validation-for="NewPatientMobile" class="text-danger small"></span>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label fw-semibold small">Email <span class="text-muted">(optional)</span></label>
+                                <input asp-for="NewPatientEmail" class="form-control" type="email" placeholder="email@example.com" />
+                                <span asp-validation-for="NewPatientEmail" class="text-danger small"></span>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold small">Address <span class="text-danger">*</span></label>
+                                <textarea asp-for="NewPatientAddress" class="form-control" rows="2" placeholder="Patient address"></textarea>
+                                <span asp-validation-for="NewPatientAddress" class="text-danger small"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Patient required error -->
+                <div id="patientError" class="doctor-required-msg mt-2 d-none">
+                    <i class="bi bi-exclamation-circle me-1"></i>Please find and select a patient
+                </div>
+            </div>
+
+            <!-- ══ STEP 2: Doctor ══ -->
+            <div class="step-section mb-4" id="doctorStep">
+                <div class="step-label"><span class="step-num">2</span> Select Doctor</div>
+                <div id="doctorList" class="doctor-grid">
+                    <div class="text-muted small">Loading doctors…</div>
+                </div>
+                <input type="hidden" asp-for="DoctorName" id="selectedDoctor" />
+                <div id="doctorError" class="doctor-required-msg mt-2 @(ViewData.ModelState["DoctorName"]?.Errors.Count > 0 ? "" : "d-none")">
+                    <i class="bi bi-exclamation-circle me-1"></i>Please select a doctor
+                </div>
+                <div id="feePanel" class="fee-panel mt-3 d-none">
+                    <div class="fee-row">
+                        <span class="fee-label"><i class="bi bi-person-plus-fill me-1 text-primary"></i>New Patient Fee</span>
+                        <span class="fee-value" id="feeNew">₹0</span>
+                    </div>
+                    <div class="fee-row">
+                        <span class="fee-label"><i class="bi bi-person-check-fill me-1 text-success"></i>Old Patient Fee</span>
+                        <span class="fee-value" id="feeOld">₹0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ STEP 3: Date ══ -->
+            <div class="step-section mb-4">
+                <div class="step-label"><span class="step-num">3</span> Appointment Date</div>
+                <input asp-for="BookingDate" class="form-control" type="date"
+                       id="bookingDate" min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                <span asp-validation-for="BookingDate" class="text-danger small"></span>
+            </div>
+
+            <!-- Availability panel -->
+            <div id="availPanel" class="d-none mb-3"></div>
+
+            <!-- OP count panel -->
+            <div id="opCountPanel" class="op-info-panel d-none mb-4">
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <div class="op-stat">
+                        <div class="op-stat-label">Already Booked</div>
+                        <div class="op-stat-value" id="opCountDisplay">0</div>
+                    </div>
+                    <div class="op-stat">
+                        <div class="op-stat-label">Next Token</div>
+                        <div class="op-stat-value text-success" id="opTokenDisplay">1</div>
+                    </div>
+                    <div class="op-stat-note" id="opNote"></div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-auth w-100" id="submitBtn" disabled>
+                <i class="bi bi-check-circle me-2"></i>Confirm Booking
+            </button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+@{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+<script>
+    // ── State ─────────────────────────────────────────────────────────────────
+    let selectedDoctor  = '@Html.Raw(Model.DoctorName ?? "")';
+    let selectedDate    = '';
+    let isNewMode       = @(Model.IsNewPatient ? "true" : "false");
+    let doctorFees      = {};
+    let doctorAvailable = false;   // false until confirmed by availability check
+    let patientResolved = @(Model.IsNewPatient || Model.ResolvedPatientId.HasValue ? "true" : "false");   // true once a patient is found/selected
+
+    // ── Submit state ──────────────────────────────────────────────────────────
+    function hasValidBookingDate() {
+        const value = document.getElementById('bookingDate').value;
+        if (!value) return false;
+
+        const selectedDateObj = new Date(value + 'T00:00:00');
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        return selectedDateObj >= today;
+    }
+
+    function updateSubmitState() {
+        const hasDoctor  = !!document.getElementById('selectedDoctor').value.trim();
+        const hasDate = hasValidBookingDate();
+        const hasBookingFor = isNewMode || (patientResolved && !!document.querySelector('#bookingForChips .booking-for-chip.active'));
+        document.getElementById('submitBtn').disabled = !(hasDoctor && hasDate && hasBookingFor && doctorAvailable);
+    }
+
+    function resetAvailabilityState() {
+        doctorAvailable = false;
+        document.getElementById('availPanel').classList.add('d-none');
+        document.getElementById('opCountPanel').classList.add('d-none');
+        updateSubmitState();
+    }
+
+    // ── Mode toggle ───────────────────────────────────────────────────────────
+    function setMode(isNew) {
+        isNewMode = isNew;
+        document.getElementById('isNewPatientField').value = isNew ? 'true' : 'false';
+        document.getElementById('existingSection').classList.toggle('d-none', isNew);
+        document.getElementById('newPatientSection').classList.toggle('d-none', !isNew);
+        document.getElementById('btnExisting').classList.toggle('active', !isNew);
+        document.getElementById('btnNew').classList.toggle('active', isNew);
+        patientResolved = isNew || !!document.getElementById('resolvedPatientId').value;
+        updateSubmitState();
+    }
+    if (isNewMode) setMode(true);
+
+    // ── Load active doctors ───────────────────────────────────────────────────
+    fetch('/Hospital/GetActiveDoctors')
+        .then(r => r.json())
+        .then(doctors => {
+            const grid = document.getElementById('doctorList');
+            if (!doctors.length) {
+                grid.innerHTML = '<p class="text-muted small">No active doctors. Add from dashboard first.</p>';
+                return;
+            }
+            doctorFees = {};
+            doctors.forEach(d => { doctorFees[d.name] = { newFee: d.newPatientFee, oldFee: d.oldPatientFee }; });
+            grid.innerHTML = doctors.map(d => `
+                <button type="button" class="doctor-chip" data-name="${d.name}"
+                        onclick="selectDoctor(this,'${d.name.replace(/'/g,"\\'")}')">
+                    <i class="bi bi-person-circle me-1"></i>
+                    <span>${d.name}</span>
+                    ${d.specialization ? `<span class="chip-spec">${d.specialization}</span>` : ''}
+                </button>`).join('');
+
+            if (selectedDoctor) {
+                const chip = grid.querySelector(`[data-name="${selectedDoctor}"]`);
+                if (chip) { selectDoctor(chip, selectedDoctor); return; }
+            }
+            if (doctors.length === 1) {
+                selectDoctor(grid.querySelector('.doctor-chip'), doctors[0].name);
+            }
+        });
+
+    // ── Doctor chip click ─────────────────────────────────────────────────────
+    function selectDoctor(chip, name) {
+        document.querySelectorAll('#doctorList .doctor-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        selectedDoctor = name;
+        document.getElementById('selectedDoctor').value = name;
+        document.getElementById('doctorError').classList.add('d-none');
+        const fees = doctorFees[name];
+        if (fees) {
+            document.getElementById('feeNew').textContent = '₹' + fees.newFee.toFixed(2).replace(/\.00$/, '');
+            document.getElementById('feeOld').textContent = '₹' + fees.oldFee.toFixed(2).replace(/\.00$/, '');
+            document.getElementById('feePanel').classList.remove('d-none');
+        }
+        resetAvailabilityState();
+        refreshAvailabilityAndCount();
+    }
+
+    // ── Date change ───────────────────────────────────────────────────────────
+    const dateInput = document.getElementById('bookingDate');
+    if (!dateInput.value) dateInput.value = new Date().toISOString().split('T')[0];
+    selectedDate = dateInput.value;
+    updateSubmitState();
+    
+    // Add validation on date input (prevent selecting past dates)
+    dateInput.addEventListener('change', function () {
+        const selectedDateObj = new Date(this.value + 'T00:00:00');
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (selectedDateObj < today) {
+            alert('Cannot book for past dates. Please select a future date.');
+            this.value = new Date().toISOString().split('T')[0];
+            selectedDate = this.value;
+        }
+
+        selectedDate = this.value;
+        resetAvailabilityState();
+        refreshAvailabilityAndCount();
+    });
+
+    dateInput.addEventListener('input', function () {
+        selectedDate = this.value;
+        resetAvailabilityState();
+        if (hasValidBookingDate()) {
+            refreshAvailabilityAndCount();
+        }
+    });
+
+    // ── Availability + OP count ───────────────────────────────────────────────
+    function refreshAvailabilityAndCount() {
+        if (!selectedDoctor || !selectedDate || !hasValidBookingDate()) {
+            resetAvailabilityState();
+            return;
+        }
+        const availPanel = document.getElementById('availPanel');
+        const opPanel    = document.getElementById('opCountPanel');
+        const requestedDoctor = selectedDoctor;
+        const requestedDate = selectedDate;
+
+        fetch(`/Hospital/GetDoctorAvailability?doctorName=${encodeURIComponent(requestedDoctor)}&date=${requestedDate}`)
+            .then(r => r.json())
+            .then(avail => {
+                if (requestedDoctor !== selectedDoctor || requestedDate !== selectedDate) return;
+
+                // Get day name for the selected date
+                const selectedDateObj = new Date(requestedDate + 'T00:00:00');
+                const dayName = selectedDateObj.toLocaleDateString('en-US', { weekday: 'long' });
+
+                // Check if both slots are empty (doctor not available)
+                const bothSlotsEmpty = (avail.morningSlot === '' || avail.morningSlot === null) && 
+                                      (avail.eveningSlot === '' || avail.eveningSlot === null);
+
+                if (!avail.isAvailable || bothSlotsEmpty) {
+                    doctorAvailable = false;
+                    availPanel.classList.remove('d-none');
+                    availPanel.className = '';
+                    availPanel.classList.add('avail-panel', 'avail-unavailable', 'mb-3');
+                    
+                    // Provide specific error messages for different scenarios
+                    let reasonText = avail.reason || 'Not available on this date';
+                    if (dayName === 'Sunday' && reasonText.includes('schedule configured')) {
+                        reasonText = `Sunday not configured for this doctor. Please select another day.`;
+                    } else if (dayName === 'Sunday') {
+                        reasonText = `Doctor not available on Sundays. Please select another day.`;
+                    }
+                    
+                    availPanel.innerHTML = `<i class="bi bi-calendar-x-fill me-2 text-danger"></i><strong>Doctor not available</strong> on ${dayName}, ${requestedDate}. <span class="ms-1 small text-muted">${reasonText}</span>`;
+                    opPanel.classList.add('d-none');
+                    updateSubmitState();
+                    return;
+                }
+
+                doctorAvailable = true;
+                updateSubmitState();
+                if (avail.hasSchedule && (avail.morningSlot || avail.eveningSlot)) {
+                    let slots = '';
+                    if (avail.morningSlot) slots += `<span class="avail-slot"><i class="bi bi-brightness-high me-1 text-warning"></i>${avail.morningSlot}</span>`;
+                    if (avail.eveningSlot) slots += `<span class="avail-slot"><i class="bi bi-moon-stars me-1 text-primary"></i>${avail.eveningSlot}</span>`;
+                    availPanel.classList.remove('d-none');
+                    availPanel.className = '';
+                    availPanel.classList.add('avail-panel', 'avail-available', 'mb-3');
+                    availPanel.innerHTML = `<i class="bi bi-check-circle-fill me-2 text-success"></i><strong>Available on ${dayName}</strong> (${requestedDate}) &nbsp;${slots}`;
+                } else {
+                    availPanel.classList.add('d-none');
+                }
+
+                fetch(`/Hospital/GetOPCount?doctorName=${encodeURIComponent(requestedDoctor)}&date=${requestedDate}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (requestedDoctor !== selectedDoctor || requestedDate !== selectedDate) return;
+
+                        opPanel.classList.remove('d-none');
+                        document.getElementById('opCountDisplay').textContent = data.count;
+                        document.getElementById('opTokenDisplay').textContent = data.next;
+                        document.getElementById('opNote').innerHTML = data.count === 0
+                            ? '<span class="badge bg-success">First booking!</span>'
+                            : `<span class="badge bg-warning text-dark">${data.count} already booked</span>`;
+                        updateSubmitState();
+                    })
+                    .catch(() => updateSubmitState());
+            })
+            .catch(err => {
+                console.error('Availability check failed:', err);
+                doctorAvailable = false;
+                availPanel.classList.add('d-none');
+                opPanel.classList.add('d-none');
+                updateSubmitState();
+            });
+    }
+
+    if (selectedDoctor && selectedDate) {
+        // Delay to ensure page is fully loaded
+        setTimeout(() => {
+            if (selectedDoctor && selectedDate) {
+                refreshAvailabilityAndCount();
+            }
+        }, 500);
+    }
+
+    // ── Patient lookup ────────────────────────────────────────────────────────
+    function lookupPatient() {
+        const val = document.getElementById('patientIdentifier').value.trim();
+        if (!val) return;
+        fetch(`/Hospital/LookupPatient?identifier=${encodeURIComponent(val)}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.found) {
+                    document.getElementById('resolvedPatientId').value   = data.id;
+                    document.getElementById('resolvedPatientName').value = data.name;
+                    document.getElementById('patientFoundName').textContent = data.name;
+                    document.getElementById('patientFoundMeta').textContent =
+                        data.mobile ? `Mobile: ${data.mobile}` : '';
+                    
+                    // Display patient details (age, village, last booking)
+                    if (data.age && data.age > 0) {
+                        document.getElementById('patientAge').textContent = data.age;
+                        document.getElementById('patientAgeBox').classList.remove('d-none');
+                    } else {
+                        document.getElementById('patientAgeBox').classList.add('d-none');
+                    }
+                    
+                    if (data.village && data.village.trim()) {
+                        document.getElementById('patientVillage').textContent = data.village;
+                        document.getElementById('patientVillageBox').classList.remove('d-none');
+                    } else {
+                        document.getElementById('patientVillageBox').classList.add('d-none');
+                    }
+                    
+                    if (data.lastBookingDate && data.lastBookingDate.trim()) {
+                        document.getElementById('patientLastBooking').textContent = data.lastBookingDate;
+                        document.getElementById('patientLastBookingBox').classList.remove('d-none');
+                    } else {
+                        document.getElementById('patientLastBooking').textContent = 'No booking history';
+                        document.getElementById('patientLastBookingBox').classList.remove('d-none');
+                    }
+                    
+                    document.getElementById('patientCard').classList.remove('d-none');
+                    document.getElementById('patientNotFound').classList.add('d-none');
+                    patientResolved = true;
+                    updateSubmitState();
+                    loadFamilyMembers(data.id);
+                } else {
+                    document.getElementById('patientCard').classList.add('d-none');
+                    document.getElementById('patientNotFound').classList.remove('d-none');
+                    document.getElementById('resolvedPatientId').value = '';
+                    document.getElementById('resolvedPatientName').value = '';
+                    document.getElementById('FamilyMemberId').value = '0';
+                    document.getElementById('bookingForChips').innerHTML = '';
+                    patientResolved = false;
+                    updateSubmitState();
+                }
+            });
+    }
+
+    document.getElementById('patientIdentifier').addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); lookupPatient(); }
+    });
+
+    // ── Family member chips ───────────────────────────────────────────────────
+    function loadFamilyMembers(patientId, autoSelectId) {
+        fetch(`/Hospital/GetFamilyMembers?patientId=${encodeURIComponent(patientId)}`)
+            .then(r => r.json())
+            .then(list => renderBookingForChips(list, autoSelectId));
+    }
+
+    function renderBookingForChips(list, autoSelectId) {
+        const wrap = document.getElementById('bookingForChips');
+        wrap.innerHTML = '';
+
+        // Get patient age from the display
+        const patientAge = document.getElementById('patientAge').textContent || '';
+        const patientVillage = document.getElementById('patientVillage').textContent || '';
+        const patientLastBooking = document.getElementById('patientLastBooking').textContent || '';
+
+        // Self chip
+        const selfBtn = makeChip(
+            document.getElementById('patientFoundName').textContent, 
+            'Self', 
+            '0', 
+            true,
+            { age: patientAge, relation: 'Self', lastBookingDate: patientLastBooking }
+        );
+        wrap.appendChild(selfBtn);
+
+        (list || []).forEach(f => {
+            wrap.appendChild(makeChip(
+                f.name, 
+                f.relation || 'Family', 
+                f.id, 
+                false,
+                { age: f.age, relation: f.relation || 'Family', lastBookingDate: f.lastBookingDate }
+            ));
+        });
+
+        // Set default
+        document.getElementById('FamilyMemberId').value = '0';
+
+        // Auto-select if specified
+        if (autoSelectId) {
+            const target = wrap.querySelector(`[data-fid="${autoSelectId}"]`);
+            if (target) target.click();
+        } else {
+            selfBtn.click();
+        }
+
+        updateSubmitState();
+    }
+
+    function makeChip(name, label, fid, isActive, memberData) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'booking-for-chip' + (isActive ? ' active' : '');
+        btn.dataset.fid = fid;
+        btn.dataset.age = memberData?.age || '';
+        btn.dataset.relation = memberData?.relation || '';
+        btn.dataset.lastBookingDate = memberData?.lastBookingDate || '';
+        btn.innerHTML = `<i class="bi bi-person-circle me-1"></i><span class="chip-name">${name}</span><span class="chip-label">${label}</span>`;
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('.booking-for-chip').forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById('FamilyMemberId').value = this.dataset.fid;
+            patientResolved = true;
+            document.getElementById('patientError').classList.add('d-none');
+            
+            // Show/update member details
+            const detailsBox = document.getElementById('selectedMemberDetailsBox');
+            const age = this.dataset.age;
+            const relation = this.dataset.relation;
+            const lastBooking = this.dataset.lastBookingDate;
+            
+            if (fid !== '0') {
+                // Family member selected
+                if (age && parseInt(age) > 0) {
+                    document.getElementById('memberAge').textContent = age;
+                    document.getElementById('memberAgeBox').classList.remove('d-none');
+                } else {
+                    document.getElementById('memberAgeBox').classList.add('d-none');
+                }
+                
+                if (relation) {
+                    document.getElementById('memberRelation').textContent = relation;
+                    document.getElementById('memberRelationBox').classList.remove('d-none');
+                } else {
+                    document.getElementById('memberRelationBox').classList.add('d-none');
+                }
+                
+                if (lastBooking && lastBooking.trim()) {
+                    document.getElementById('memberLastBooking').textContent = lastBooking;
+                    document.getElementById('memberLastBookingBox').classList.remove('d-none');
+                } else {
+                    document.getElementById('memberLastBooking').textContent = 'No booking history';
+                    document.getElementById('memberLastBookingBox').classList.remove('d-none');
+                }
+                
+                detailsBox.style.display = 'block';
+            } else {
+                // Self selected
+                detailsBox.style.display = 'none';
+            }
+
+            updateSubmitState();
+        });
+        return btn;
+    }
+
+    // ── Add family member inline ──────────────────────────────────────────────
+    document.getElementById('toggleAddFamily').addEventListener('click', function () {
+        document.getElementById('addFamilyForm').classList.toggle('d-none');
+    });
+
+    function saveFamilyMember() {
+        const name     = document.getElementById('fmName').value.trim();
+        const age      = parseInt(document.getElementById('fmAge').value, 10);
+        const relation = document.getElementById('fmRelation').value.trim();
+        const errEl    = document.getElementById('fmError');
+        errEl.textContent = '';
+        if (!name)        { errEl.textContent = 'Name is required.'; return; }
+        if (!age || age < 1) { errEl.textContent = 'Enter a valid age.'; return; }
+
+        const patientId = parseInt(document.getElementById('resolvedPatientId').value || '0');
+        const token     = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+        fetch('/Hospital/AddFamilyMemberForPatient', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+            body: JSON.stringify({ PatientId: patientId, Name: name, Age: age, Relation: relation })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('fmName').value     = '';
+                document.getElementById('fmAge').value      = '';
+                document.getElementById('fmRelation').value = '';
+                document.getElementById('addFamilyForm').classList.add('d-none');
+                loadFamilyMembers(patientId, data.id);
+            } else {
+                errEl.textContent = data.message || 'Unable to save.';
+            }
+        }).catch(() => { errEl.textContent = 'Something went wrong.'; });
+    }
+
+    // ── Single submit guard ───────────────────────────────────────────────────
+    document.getElementById('bookForm').addEventListener('submit', function (e) {
+        const errors = [];
+        
+        // 1. Patient validation
+        if (!isNewMode && !patientResolved) {
+            errors.push('Please find and select a patient');
+            document.getElementById('patientError').classList.remove('d-none');
+            document.getElementById('patientIdentifier').focus();
+        }
+        
+        // 2. Doctor validation
+        if (!document.getElementById('selectedDoctor').value.trim()) {
+            errors.push('Please select a doctor');
+            document.getElementById('doctorError').classList.remove('d-none');
+        }
+        
+        // 3. Date validation
+        const bookingDate = document.getElementById('bookingDate').value;
+        if (!bookingDate) {
+            errors.push('Please select an appointment date');
+        } else {
+            const selectedDateObj = new Date(bookingDate + 'T00:00:00');
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (selectedDateObj < today) {
+                errors.push('Cannot book for past dates');
+            }
+        }
+        
+        // 4. Availability validation (most critical)
+        if (!doctorAvailable) {
+            errors.push('Doctor is not available on the selected date. Please check the availability message and select another date.');
+            document.getElementById('availPanel').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
+        // Show errors if any
+        if (errors.length > 0) {
+            e.preventDefault();
+            // Show all validation errors in alert
+            alert('Please fix the following issues:\n\n• ' + errors.join('\n• '));
+            return;
+        }
+    });
+</script>
+}

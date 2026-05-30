@@ -1,0 +1,659 @@
+@model HospitalOPBooking.Models.HospitalDashboardViewModel
+@{
+    ViewData["Title"] = "Hospital Dashboard";
+}
+
+<!-- Welcome Banner -->
+<div class="dash-banner mb-4">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <div class="dash-avatar"><i class="bi bi-building-fill-check"></i></div>
+            <div>
+                <h3 class="mb-0 fw-bold text-white">
+                    <i class="bi bi-hospital-fill me-2"></i>@Model.HospitalName
+                </h3>
+                <p class="mb-0 text-white opacity-85 small"><i class="bi bi-graph-up me-1"></i>Hospital Dashboard</p>
+            </div>
+        </div>
+        <a asp-controller="Hospital" asp-action="BookForPatient"
+           class="btn btn-light btn-sm fw-semibold" style="box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+            <i class="bi bi-calendar-plus me-1"></i>Book for Patient
+        </a>
+    </div>
+</div>
+
+@if (TempData["BookSuccess"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i><strong>Success!</strong> @TempData["BookSuccess"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["DoctorSuccess"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i><strong>Success!</strong> @TempData["DoctorSuccess"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["DoctorError"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i><strong>Error!</strong> @TempData["DoctorError"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- ── Stats Row ── -->
+<div class="row g-4 mb-5">
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card stat-blue">
+            <div class="stat-icon"><i class="bi bi-calendar2-check"></i></div>
+            <div class="stat-value">@Model.TotalBookings</div>
+            <div class="stat-label">Total Bookings</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card stat-orange">
+            <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+            <div class="stat-value">@Model.TodayTotal</div>
+            <div class="stat-label">Today's OPs</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card stat-green">
+            <div class="stat-icon"><i class="bi bi-check-circle-fill"></i></div>
+            <div class="stat-value">@Model.TodayDone</div>
+            <div class="stat-label">Done Today</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card stat-yellow">
+            <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
+            <div class="stat-value">@Model.TodayPending</div>
+            <div class="stat-label">Pending</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+
+    <!-- ── LEFT: Doctors Panel ── -->
+    <div class="col-lg-4">
+        <div class="panel-card h-100">
+            <div class="panel-header">
+                <span><i class="bi bi-person-badge me-2"></i>Doctors</span>
+                <span class="badge bg-primary">@Model.Doctors.Count</span>
+            </div>
+            <div class="panel-body">
+
+                <!-- Add Doctor Form -->
+                <form asp-action="AddDoctor" asp-controller="Hospital" method="post" class="mb-3">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-2">
+                        <input type="text" name="Name" class="form-control"
+                               placeholder="Doctor name *" required maxlength="100" />
+                    </div>
+                    <div class="mb-2">
+                        <input type="text" name="Specialization" class="form-control"
+                               placeholder="Specialization (e.g. Cardiologist)" maxlength="150" />
+                    </div>
+                    <div class="mb-2">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" name="NewPatientFee" class="form-control"
+                                   placeholder="New patient fee" min="0" step="0.01" value="0" />
+                        </div>
+                        <div class="form-text ps-1">
+                            <i class="bi bi-person-plus-fill text-primary me-1"></i>New Patient Fee
+                            <span class="text-muted">(Revisit rules configured per doctor below)</span>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-plus-lg me-1"></i>Add Doctor
+                    </button>
+                </form>
+
+                <!-- Doctor List -->
+                @if (!Model.Doctors.Any())
+                {
+                    <p class="text-muted small text-center py-3">No doctors added yet.</p>
+                }
+                else
+                {
+                    <ul class="doctor-list" id="doctorList">
+                        @foreach (var d in Model.Doctors)
+                        {
+                            <li class="doctor-item @(!d.IsActive ? "doctor-inactive" : "")"
+                                id="doc-@d.Id">
+                                <div class="doctor-item-name" id="docName-@d.Id">
+                                    <i class="bi bi-person-circle me-1 text-primary"></i>
+                                    <div>
+                                        <span id="docNameText-@d.Id" class="fw-semibold">@d.Name</span>
+                                        @if (!string.IsNullOrWhiteSpace(d.Specialization))
+                                        {
+                                            <br />
+                                            <span id="docSpecText-@d.Id" class="doc-spec-badge">
+                                                @d.Specialization
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <br />
+                                            <span id="docSpecText-@d.Id" class="doc-spec-badge d-none"></span>
+                                        }
+                                        <br />
+                                        <span class="doc-fee-text" id="docFeeText-@d.Id">
+                                            <i class="bi bi-person-plus-fill text-primary me-1"></i>
+                                            New: <strong id="docNewFee-@d.Id">₹@d.NewPatientFee.ToString("0.##")</strong>
+                                            &nbsp;
+                                            <span id="docRulesSummary-@d.Id" class="text-muted small"></span>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="doctor-item-actions">
+                                    <!-- Fee Rules -->
+                                    <button type="button" class="btn-icon text-success"
+                                            title="Configure Fee Rules"
+                                            onclick="openFeeRules(@d.Id, '@d.Name.Replace("'","\\'")', @d.NewPatientFee)">
+                                        <i class="bi bi-currency-rupee"></i>
+                                    </button>
+                                    <!-- Schedule -->
+                                    <a asp-controller="Schedule" asp-action="Doctor"
+                                       asp-route-doctorId="@d.Id"
+                                       class="btn-icon text-info" title="Set Schedule">
+                                        <i class="bi bi-calendar-week-fill"></i>
+                                    </a>
+                                    <!-- Edit -->
+                                    <button type="button" class="btn-icon text-primary"
+                                            title="Edit"
+                                            onclick="startEdit(@d.Id, '@d.Name.Replace("'","\\'")', '@d.Specialization.Replace("'","\\'")', @d.NewPatientFee)">
+                                        <i class="bi bi-pencil-fill"></i>
+                                    </button>
+                                    <!-- Toggle Active -->
+                                    <form asp-action="ToggleDoctor" asp-controller="Hospital"
+                                          method="post" class="d-inline toggle-form" data-docid="@d.Id">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="doctorId" value="@d.Id" />
+                                        <button type="submit"
+                                                class="btn-icon @(d.IsActive ? "text-warning" : "text-success")"
+                                                title="@(d.IsActive ? "Set Inactive" : "Set Active")">
+                                            <i class="bi @(d.IsActive ? "bi-toggle-on" : "bi-toggle-off")"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- ── RIGHT: Today's OP Queue ── -->
+    <div class="col-lg-8">
+        <div class="panel-card">
+            <div class="panel-header">
+                <span><i class="bi bi-list-ol me-2"></i>Today's OP Queue</span>
+                <span class="text-muted small">@DateTime.Today.ToString("dd MMM yyyy")</span>
+            </div>
+            <div class="panel-body p-0">
+                @if (!Model.TodayQueue.Any())
+                {
+                    <div class="empty-state py-4">
+                        <i class="bi bi-calendar-x"></i>
+                        <p>No bookings for today.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover queue-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Token</th>
+                                    <th>Patient</th>
+                                    <th>Mobile</th>
+                                    <th>Doctor</th>
+                                    <th>Source</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="queueBody">
+                                @foreach (var q in Model.TodayQueue)
+                                {
+                                    <tr id="row-@q.BookingId"
+                                        class="@(q.IsDone ? "row-done" : "")">
+                                        <td>
+                                            <span class="token-pill @(q.IsDone ? "token-done" : "token-active")">
+                                                #@q.TokenNumber
+                                            </span>
+                                        </td>
+                                        <td class="fw-semibold">@q.PatientName</td>
+                                        <td class="text-muted small">@q.PatientMobile</td>
+                                        <td class="small">Dr. @q.DoctorName</td>
+                                        <td>
+                                            @if (q.BookedByHospital)
+                                            {
+                                                <span class="badge bg-info text-dark">Hospital</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-light text-muted border">Patient</span>
+                                            }
+                                        </td>
+                                        <td id="status-@q.BookingId">
+                                            @if (q.IsDone)
+                                            {
+                                                <span class="badge bg-success">Done</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-warning text-dark">Pending</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (!q.IsDone)
+                                            {
+                                                <form class="mark-done-form" data-id="@q.BookingId">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-success btn-sm">
+                                                        <i class="bi bi-check2 me-1"></i>Done
+                                                    </button>
+                                                </form>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Edit Doctor Modal -->
+<div class="modal fade" id="editDoctorModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:420px">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title fw-bold">
+                    <i class="bi bi-pencil-fill me-2 text-primary"></i>Edit Doctor
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small">Doctor Name <span class="text-danger">*</span></label>
+                    <input type="text" id="editDoctorName" class="form-control" maxlength="100" placeholder="Doctor name…" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small">Specialization</label>
+                    <input type="text" id="editDoctorSpec" class="form-control" maxlength="150" placeholder="e.g. Cardiologist…" />
+                </div>
+                <div class="mb-2">
+                    <label class="form-label fw-semibold small">
+                        <i class="bi bi-person-plus-fill text-primary me-1"></i>New Patient Fee (₹)
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input type="number" id="editNewFee" class="form-control" min="0" step="0.01" placeholder="0" />
+                    </div>
+                    <div class="form-text">Fee for first-time patients. Revisit rules are configured separately via the <strong>₹</strong> button.</div>
+                </div>
+                <div id="editDoctorError" class="text-danger small mt-1 d-none"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="saveEdit()">
+                    <i class="bi bi-check-lg me-1"></i>Save
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Fee Rules Modal ── -->
+<div class="modal fade" id="feeRulesModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h6 class="modal-title fw-bold mb-0">
+                        <i class="bi bi-currency-rupee me-2 text-success"></i>
+                        Revisit Fee Rules — <span id="feeRulesDoctorName"></span>
+                    </h6>
+                    <div class="text-muted small mt-1">
+                        Configure how much to charge based on days since the patient's last visit.
+                    </div>
+                </div>
+                <button type="button" class="btn-close ms-3" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+
+                <!-- New Patient Fee (read-only reminder) -->
+                <div class="fee-rules-base-fee mb-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div>
+                            <div class="small text-muted fw-semibold">
+                                <i class="bi bi-person-plus-fill text-primary me-1"></i>New Patient Fee
+                                <span class="text-muted">(first visit / no previous visit)</span>
+                            </div>
+                            <div class="fw-bold text-primary fs-5">
+                                ₹<span id="feeRulesNewFeeDisplay">0</span>
+                            </div>
+                        </div>
+                        <div class="text-muted small">
+                            <i class="bi bi-arrow-right me-1"></i>
+                            Also applied when revisit days exceed all configured rules.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rules table -->
+                <div class="fw-semibold small mb-2">
+                    <i class="bi bi-table me-1 text-success"></i>Revisit Rules
+                    <span class="text-muted fw-normal">(applied when patient revisits within the day range)</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm fee-rules-table mb-2" id="feeRulesTable">
+                        <thead>
+                            <tr>
+                                <th style="width:30%">From Day <span class="text-muted fw-normal">(inclusive)</span></th>
+                                <th style="width:30%">To Day <span class="text-muted fw-normal">(inclusive)</span></th>
+                                <th style="width:30%">Fee (₹)</th>
+                                <th style="width:10%"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="feeRulesBody">
+                            <!-- rows injected by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <button type="button" class="btn btn-outline-success btn-sm" onclick="addFeeRuleRow()">
+                    <i class="bi bi-plus-lg me-1"></i>Add Rule
+                </button>
+
+                <div id="feeRulesError" class="alert alert-danger py-2 small mt-3 d-none"></div>
+                <div id="feeRulesSuccess" class="alert alert-success py-2 small mt-3 d-none"></div>
+
+                <!-- Example hint -->
+                <div class="fee-rules-hint mt-3">
+                    <strong>Example:</strong> 0–7 days → ₹0 &nbsp;|&nbsp; 8–15 days → ₹300 &nbsp;|&nbsp; 16–30 days → ₹500
+                    <br>If a patient revisits after 31 days, the <em>New Patient Fee</em> applies.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-success btn-sm" onclick="saveFeeRules()">
+                    <i class="bi bi-save me-1"></i>Save Rules
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // ── Edit Doctor ───────────────────────────────────────────────────────────
+    let editingDoctorId = null;
+
+    function startEdit(id, currentName, currentSpec, newFee) {
+        editingDoctorId = id;
+        document.getElementById('editDoctorName').value = currentName;
+        document.getElementById('editDoctorSpec').value = currentSpec || '';
+        document.getElementById('editNewFee').value     = newFee || 0;
+        document.getElementById('editDoctorError').classList.add('d-none');
+        new bootstrap.Modal(document.getElementById('editDoctorModal')).show();
+    }
+
+    function saveEdit() {
+        const name   = document.getElementById('editDoctorName').value.trim();
+        const spec   = document.getElementById('editDoctorSpec').value.trim();
+        const newFee = parseFloat(document.getElementById('editNewFee').value) || 0;
+
+        if (!name) {
+            document.getElementById('editDoctorError').textContent = 'Name cannot be empty.';
+            document.getElementById('editDoctorError').classList.remove('d-none');
+            return;
+        }
+
+        const token = document.querySelector('input[name="__RequestVerificationToken"]');
+        fetch('/Hospital/EditDoctor', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'RequestVerificationToken': token?.value ?? ''
+            },
+            body: `doctorId=${editingDoctorId}&name=${encodeURIComponent(name)}&specialization=${encodeURIComponent(spec)}&newPatientFee=${newFee}`
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) {
+                document.getElementById(`docNameText-${editingDoctorId}`).textContent = data.name;
+                const specEl = document.getElementById(`docSpecText-${editingDoctorId}`);
+                if (specEl) { specEl.textContent = data.spec; specEl.classList.toggle('d-none', !data.spec); }
+                const feeEl = document.getElementById(`docNewFee-${editingDoctorId}`);
+                if (feeEl) feeEl.textContent = '₹' + (data.newFee || 0).toFixed(2).replace(/\.00$/, '');
+                bootstrap.Modal.getInstance(document.getElementById('editDoctorModal')).hide();
+            } else {
+                document.getElementById('editDoctorError').textContent = data.msg;
+                document.getElementById('editDoctorError').classList.remove('d-none');
+            }
+        });
+    }
+
+    // ── Fee Rules Modal ───────────────────────────────────────────────────────
+    let feeRulesDoctorId  = null;
+    let feeRulesNewFee    = 0;
+
+    function openFeeRules(doctorId, doctorName, newFee) {
+        feeRulesDoctorId = doctorId;
+        feeRulesNewFee   = newFee;
+        document.getElementById('feeRulesDoctorName').textContent    = 'Dr. ' + doctorName;
+        document.getElementById('feeRulesNewFeeDisplay').textContent = (newFee || 0).toFixed(2).replace(/\.00$/, '');
+        document.getElementById('feeRulesError').classList.add('d-none');
+        document.getElementById('feeRulesSuccess').classList.add('d-none');
+
+        // Load existing rules from server
+        fetch(`/Hospital/GetFeeRules?doctorId=${doctorId}`)
+            .then(r => r.json())
+            .then(rules => {
+                const tbody = document.getElementById('feeRulesBody');
+                tbody.innerHTML = '';
+                if (rules.length === 0) {
+                    // Start with one empty row as a hint
+                    addFeeRuleRow();
+                } else {
+                    rules.forEach(r => addFeeRuleRow(r.fromDay, r.toDay, r.fee));
+                }
+            });
+
+        new bootstrap.Modal(document.getElementById('feeRulesModal')).show();
+    }
+
+    function addFeeRuleRow(fromDay = '', toDay = '', fee = '') {
+        const tbody = document.getElementById('feeRulesBody');
+        const tr    = document.createElement('tr');
+        tr.innerHTML = `
+            <td>
+                <input type="number" class="form-control form-control-sm rule-from"
+                       min="0" max="9999" placeholder="e.g. 0" value="${fromDay}" />
+            </td>
+            <td>
+                <input type="number" class="form-control form-control-sm rule-to"
+                       min="0" max="9999" placeholder="e.g. 7" value="${toDay}" />
+            </td>
+            <td>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text">₹</span>
+                    <input type="number" class="form-control rule-fee"
+                           min="0" step="0.01" placeholder="0" value="${fee}" />
+                </div>
+            </td>
+            <td class="text-center">
+                <button type="button" class="btn-icon text-danger" title="Remove row"
+                        onclick="this.closest('tr').remove()">
+                    <i class="bi bi-x-circle-fill"></i>
+                </button>
+            </td>`;
+        tbody.appendChild(tr);
+    }
+
+    function saveFeeRules() {
+        const errEl  = document.getElementById('feeRulesError');
+        const okEl   = document.getElementById('feeRulesSuccess');
+        errEl.classList.add('d-none');
+        okEl.classList.add('d-none');
+
+        // Collect rows
+        const rows   = document.querySelectorAll('#feeRulesBody tr');
+        const rules  = [];
+        let hasError = false;
+
+        rows.forEach((tr, idx) => {
+            const from = parseInt(tr.querySelector('.rule-from').value);
+            const to   = parseInt(tr.querySelector('.rule-to').value);
+            const fee  = parseFloat(tr.querySelector('.rule-fee').value);
+
+            if (isNaN(from) || isNaN(to) || isNaN(fee)) {
+                errEl.textContent = `Row ${idx + 1}: All fields are required.`;
+                hasError = true; return;
+            }
+            if (from > to) {
+                errEl.textContent = `Row ${idx + 1}: "From Day" must be ≤ "To Day".`;
+                hasError = true; return;
+            }
+            if (fee < 0) {
+                errEl.textContent = `Row ${idx + 1}: Fee cannot be negative.`;
+                hasError = true; return;
+            }
+            rules.push({ fromDay: from, toDay: to, fee });
+        });
+
+        if (hasError) { errEl.classList.remove('d-none'); return; }
+
+        // Client-side overlap check
+        for (let i = 0; i < rules.length; i++) {
+            for (let j = i + 1; j < rules.length; j++) {
+                if (rules[i].fromDay <= rules[j].toDay && rules[j].fromDay <= rules[i].toDay) {
+                    errEl.textContent = `Rows ${i + 1} and ${j + 1} have overlapping day ranges.`;
+                    errEl.classList.remove('d-none');
+                    return;
+                }
+            }
+        }
+
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        fetch(`/Hospital/SaveFeeRules?doctorId=${feeRulesDoctorId}&newPatientFee=${feeRulesNewFee}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': token
+            },
+            body: JSON.stringify(rules)
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) {
+                okEl.textContent = 'Fee rules saved successfully.';
+                okEl.classList.remove('d-none');
+                // Update the summary badge on the doctor list
+                updateRulesSummary(feeRulesDoctorId, rules);
+            } else {
+                errEl.textContent = data.msg || 'Failed to save.';
+                errEl.classList.remove('d-none');
+            }
+        })
+        .catch(() => {
+            errEl.textContent = 'Network error. Please try again.';
+            errEl.classList.remove('d-none');
+        });
+    }
+
+    function updateRulesSummary(doctorId, rules) {
+        const el = document.getElementById(`docRulesSummary-${doctorId}`);
+        if (!el) return;
+        if (!rules.length) {
+            el.textContent = '';
+            return;
+        }
+        const parts = rules
+            .sort((a, b) => a.fromDay - b.fromDay)
+            .map(r => `${r.fromDay}–${r.toDay}d: ₹${r.fee}`);
+        el.textContent = '· ' + parts.join(' | ');
+    }
+
+    // Load rule summaries on page load
+    document.querySelectorAll('[id^="docRulesSummary-"]').forEach(el => {
+        const docId = el.id.replace('docRulesSummary-', '');
+        fetch(`/Hospital/GetFeeRules?doctorId=${docId}`)
+            .then(r => r.json())
+            .then(rules => updateRulesSummary(parseInt(docId), rules));
+    });
+
+    // ── Toggle Doctor (AJAX) ──────────────────────────────────────────────────
+    document.querySelectorAll('.toggle-form').forEach(form => {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const docId = this.dataset.docid;
+            const token = this.querySelector('input[name="__RequestVerificationToken"]').value;
+            fetch('/Hospital/ToggleDoctor', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': token },
+                body: `doctorId=${docId}`
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.ok) return;
+                const row  = document.getElementById(`doc-${docId}`);
+                const btn  = this.querySelector('button');
+                const icon = btn.querySelector('i');
+                if (data.isActive) {
+                    row.classList.remove('doctor-inactive');
+                    btn.classList.replace('text-success', 'text-warning');
+                    btn.title = 'Set Inactive';
+                    icon.classList.replace('bi-toggle-off', 'bi-toggle-on');
+                } else {
+                    row.classList.add('doctor-inactive');
+                    btn.classList.replace('text-warning', 'text-success');
+                    btn.title = 'Set Active';
+                    icon.classList.replace('bi-toggle-on', 'bi-toggle-off');
+                }
+            });
+        });
+    });
+
+    // ── Mark Done (AJAX) ──────────────────────────────────────────────────────
+    document.querySelectorAll('.mark-done-form').forEach(form => {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const id    = this.dataset.id;
+            const token = this.querySelector('input[name="__RequestVerificationToken"]').value;
+            fetch('/Hospital/MarkDone', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': token },
+                body: `bookingId=${id}`
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.ok) return;
+                const row = document.getElementById(`row-${id}`);
+                row.classList.add('row-done');
+                document.getElementById(`status-${id}`).innerHTML = '<span class="badge bg-success">Done</span>';
+                this.remove();
+                const doneEl    = document.querySelector('.stat-green .stat-value');
+                const pendingEl = document.querySelector('.stat-yellow .stat-value');
+                if (doneEl)    doneEl.textContent    = parseInt(doneEl.textContent)    + 1;
+                if (pendingEl) pendingEl.textContent = parseInt(pendingEl.textContent) - 1;
+            });
+        });
+    });
+</script>
+}

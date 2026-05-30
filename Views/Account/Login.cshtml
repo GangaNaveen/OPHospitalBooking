@@ -1,0 +1,125 @@
+@model HospitalOPBooking.Models.LoginViewModel
+@{
+    ViewData["Title"] = "Sign In";
+}
+
+<div class="auth-wrapper">
+    <div class="auth-card">
+
+        <!-- Logo Section -->
+        <div class="auth-logo-section">
+            <img src="~/images/logo.png" alt="Hospital OP Booking Logo" class="auth-logo" />
+        </div>
+
+        <!-- Header -->
+        @*<div class="auth-header">
+            <div class="auth-icon">
+                <i class="bi bi-hospital"></i>
+            </div>
+            <h2 class="auth-title">Welcome Back</h2>
+            <p class="auth-subtitle">Sign in to Hospital OP Booking</p>
+        </div>*@
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        @if (TempData["LogoutSuccess"] != null)
+        {
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                <i class="bi bi-info-circle-fill me-2"></i>You have been logged out successfully.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <script>
+                // Clear auth data from IndexedDB on logout
+                clearLoginData();
+            </script>
+        }
+
+        <form asp-action="Login" asp-controller="Account" method="post" novalidate>
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+
+            <!-- Email or Mobile -->
+            <div class="form-floating mb-3">
+                <input asp-for="EmailOrMobile"
+                       class="form-control"
+                       placeholder="Email or Mobile Number"
+                       id="loginIdentifier"
+                       type="text"
+                       autocomplete="username"
+                       inputmode="email" />
+                <label for="loginIdentifier">
+                    <i class="bi bi-person-circle me-1"></i>Email or Mobile Number
+                </label>
+                <span asp-validation-for="EmailOrMobile" class="text-danger small"></span>
+            </div>
+
+            <!-- Password -->
+            <div class="form-floating mb-3 password-field">
+                <input asp-for="Password"
+                       class="form-control"
+                       placeholder="Password"
+                       id="loginPassword"
+                       type="password"
+                       autocomplete="current-password" />
+                <label for="loginPassword"><i class="bi bi-lock me-1"></i>Password</label>
+                <button type="button" class="toggle-pw" onclick="togglePassword('loginPassword', this)" aria-label="Show/hide password">
+                    <i class="bi bi-eye"></i>
+                </button>
+                <span asp-validation-for="Password" class="text-danger small"></span>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="form-check">
+                    <input asp-for="RememberMe" class="form-check-input" id="rememberMe" />
+                    <label class="form-check-label text-muted small" for="rememberMe">Remember me</label>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-auth w-100">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+            </button>
+        </form>
+
+        <!-- Login hint -->
+        <div class="login-hint">
+            <i class="bi bi-info-circle me-1"></i>
+            You can sign in using your <strong>Email address</strong> or <strong>Mobile Number</strong>
+        </div>
+
+        <div class="auth-footer">
+            Don't have an account?
+            <a asp-action="RegisterPatient" asp-controller="Account" class="auth-link">Register here</a>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        function togglePassword(id, btn) {
+            const input = document.getElementById(id);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('bi-eye', 'bi-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('bi-eye-slash', 'bi-eye');
+            }
+        }
+
+        // Switch keyboard type on mobile: numeric for mobile numbers, email for email
+        const identifier = document.getElementById('loginIdentifier');
+        identifier.addEventListener('input', function () {
+            const val = this.value.trim();
+            this.inputMode = /^\d/.test(val) ? 'numeric' : 'email';
+        });
+    </script>
+}

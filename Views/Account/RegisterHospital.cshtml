@@ -1,0 +1,123 @@
+@model HospitalOPBooking.Models.HospitalRegisterViewModel
+@{
+    ViewData["Title"] = "Hospital Registration";
+}
+
+<div class="auth-wrapper">
+    <div class="auth-card">
+
+        <!-- Header -->
+        <div class="auth-header">
+            <div class="auth-icon">
+                <i class="bi bi-hospital"></i>
+            </div>
+            <h2 class="auth-title">Create Account</h2>
+            <p class="auth-subtitle">Join Hospital OP Booking System</p>
+        </div>
+
+        <!-- Role Toggle -->
+        <div class="role-toggle-wrapper">
+            <div class="role-toggle">
+                <a href="@Url.Action("RegisterPatient", "Account")" class="role-btn">
+                    <i class="bi bi-person-fill"></i> Patient
+                </a>
+                <a href="@Url.Action("RegisterHospital", "Account")" class="role-btn active">
+                    <i class="bi bi-building-fill-cross"></i> Hospital
+                </a>
+            </div>
+        </div>
+
+        <form asp-action="SaveHospital" asp-controller="Account" method="post" novalidate>
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+
+            <div class="form-floating mb-3">
+                <input asp-for="HospitalName" class="form-control" placeholder="Hospital Name"
+                       id="hospName" autocomplete="organization" />
+                <label for="hospName"><i class="bi bi-building-fill-cross me-1"></i>Hospital Name</label>
+                <span asp-validation-for="HospitalName" class="text-danger small"></span>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input asp-for="DoctorName" class="form-control" placeholder="Doctor Name"
+                       id="doctorName" autocomplete="name" />
+                <label for="doctorName"><i class="bi bi-person-badge me-1"></i>Doctor Name</label>
+                <span asp-validation-for="DoctorName" class="text-danger small"></span>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-sm-6">
+                    <div class="form-floating">
+                        <input asp-for="Email" class="form-control" placeholder="Email"
+                               id="hospEmail" type="email" autocomplete="email" />
+                        <label for="hospEmail"><i class="bi bi-envelope me-1"></i>Email Address</label>
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-floating">
+                        <input asp-for="MobileNumber" class="form-control" placeholder="Mobile"
+                               id="hospMobile" type="tel" maxlength="10" autocomplete="tel" />
+                        <label for="hospMobile"><i class="bi bi-phone me-1"></i>Mobile Number</label>
+                        <span asp-validation-for="MobileNumber" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-floating mb-3">
+                <textarea asp-for="Address" class="form-control" placeholder="Address"
+                          id="hospAddress" style="height:90px"></textarea>
+                <label for="hospAddress"><i class="bi bi-geo-alt me-1"></i>Address</label>
+                <span asp-validation-for="Address" class="text-danger small"></span>
+            </div>
+
+            <div class="form-floating mb-3 password-field">
+                <input asp-for="Password" class="form-control" placeholder="Password"
+                       id="hospPassword" type="password" autocomplete="new-password" />
+                <label for="hospPassword"><i class="bi bi-lock me-1"></i>Password</label>
+                <button type="button" class="toggle-pw" onclick="togglePassword('hospPassword', this)">
+                    <i class="bi bi-eye"></i>
+                </button>
+                <span asp-validation-for="Password" class="text-danger small"></span>
+            </div>
+
+            <div class="form-floating mb-4 password-field">
+                <input asp-for="ConfirmPassword" class="form-control" placeholder="Confirm Password"
+                       id="hospConfirm" type="password" autocomplete="new-password" />
+                <label for="hospConfirm"><i class="bi bi-lock-fill me-1"></i>Confirm Password</label>
+                <button type="button" class="toggle-pw" onclick="togglePassword('hospConfirm', this)">
+                    <i class="bi bi-eye"></i>
+                </button>
+                <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-auth w-100">
+                <i class="bi bi-building-check me-2"></i>Register Hospital
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            Already have an account?
+            <a asp-action="Login" asp-controller="Account" class="auth-link">Sign In</a>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        function togglePassword(id, btn) {
+            const input = document.getElementById(id);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('bi-eye', 'bi-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('bi-eye-slash', 'bi-eye');
+            }
+        }
+    </script>
+}

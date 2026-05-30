@@ -1,0 +1,242 @@
+@model HospitalOPBooking.Models.DoctorScheduleViewModel
+@{
+    ViewData["Title"] = $"Schedule – Dr. {Model.DoctorName}";
+}
+
+<div class="mb-3">
+    <a asp-controller="Hospital" asp-action="Dashboard" class="back-link">
+        <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
+    </a>
+</div>
+
+<div class="schedule-page-header mb-4">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+        <div class="sched-avatar"><i class="bi bi-person-badge-fill"></i></div>
+        <div>
+            <h4 class="mb-0 fw-bold">Dr. @Model.DoctorName</h4>
+            @if (!string.IsNullOrEmpty(Model.Specialization))
+            {
+                <span class="doc-spec-badge">@Model.Specialization</span>
+            }
+        </div>
+    </div>
+</div>
+
+@if (TempData["ScheduleSuccess"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle-fill me-2"></i>@TempData["ScheduleSuccess"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["ScheduleError"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ScheduleError"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row g-4">
+
+    <!-- ── Weekly Schedule ── -->
+    <div class="col-lg-8">
+        <div class="panel-card">
+            <div class="panel-header">
+                <span><i class="bi bi-calendar-week me-2"></i>Weekly Schedule</span>
+                <span class="text-muted small">Set available days &amp; timings</span>
+            </div>
+            <div class="panel-body">
+                <form asp-action="SaveWeeklySchedule" asp-controller="Schedule" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="doctorId" value="@Model.DoctorId" />
+
+                    <div class="schedule-grid">
+                        @for (int i = 0; i < Model.WeeklySchedule.Count; i++)
+                        {
+                            var day = Model.WeeklySchedule[i];
+                            var isWeekend = day.DayOfWeek == 0 || day.DayOfWeek == 6;
+                            <input type="hidden" name="schedule[@i].DoctorId"  value="@day.DoctorId" />
+                            <input type="hidden" name="schedule[@i].DayOfWeek" value="@day.DayOfWeek" />
+
+                            <div class="sched-row @(isWeekend ? "sched-weekend" : "")"
+                                 id="schedRow_@i">
+                                <!-- Day name + toggle -->
+                                <div class="sched-day">
+                                    <div class="form-check form-switch mb-0">
+                                        <input class="form-check-input sched-toggle"
+                                               type="checkbox"
+                                               name="schedule[@i].IsAvailable"
+                                               value="true"
+                                               id="avail_@i"
+                                               data-row="@i"
+                                               @(day.IsAvailable ? "checked" : "") />
+                                        <input type="hidden" name="schedule[@i].IsAvailable" value="false" />
+                                        <label class="form-check-label fw-semibold" for="avail_@i">
+                                            @day.DayName
+                                        </label>
+                                    </div>
+                                    @if (isWeekend)
+                                    {
+                                        <span class="badge bg-secondary ms-2" style="font-size:.65rem">Weekend</span>
+                                    }
+                                </div>
+
+                                <!-- Time slots -->
+                                <div class="sched-slots" id="slots_@i"
+                                     style="@(!day.IsAvailable ? "opacity:.35;pointer-events:none" : "")">
+                                    <div class="sched-slot-group">
+                                        <span class="sched-slot-label">
+                                            <i class="bi bi-brightness-high text-warning me-1"></i>Morning
+                                        </span>
+                                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                                            <input type="time" class="form-control form-control-sm sched-time"
+                                                   name="schedule[@i].MorningFrom"
+                                                   value="@day.MorningFrom"
+                                                   placeholder="From" />
+                                            <span class="text-muted small">to</span>
+                                            <input type="time" class="form-control form-control-sm sched-time"
+                                                   name="schedule[@i].MorningTo"
+                                                   value="@day.MorningTo"
+                                                   placeholder="To" />
+                                        </div>
+                                    </div>
+                                    <div class="sched-slot-group mt-2">
+                                        <span class="sched-slot-label">
+                                            <i class="bi bi-moon-stars text-primary me-1"></i>Evening
+                                        </span>
+                                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                                            <input type="time" class="form-control form-control-sm sched-time"
+                                                   name="schedule[@i].EveningFrom"
+                                                   value="@day.EveningFrom"
+                                                   placeholder="From" />
+                                            <span class="text-muted small">to</span>
+                                            <input type="time" class="form-control form-control-sm sched-time"
+                                                   name="schedule[@i].EveningTo"
+                                                   value="@day.EveningTo"
+                                                   placeholder="To" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="mt-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-save me-2"></i>Save Schedule
+                        </button>
+                        <a asp-controller="Hospital" asp-action="Dashboard" class="btn btn-outline-secondary px-4">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Leave / Unavailable Dates ── -->
+    <div class="col-lg-4">
+        <div class="panel-card">
+            <div class="panel-header">
+                <span><i class="bi bi-calendar-x me-2"></i>Leave / Unavailable Dates</span>
+            </div>
+            <div class="panel-body">
+
+                <!-- Add leave date -->
+                <form asp-action="AddLeaveDate" asp-controller="Schedule" method="post" class="mb-3">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="doctorId" value="@Model.DoctorId" />
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold small">Date <span class="text-danger">*</span></label>
+                        <input type="date" name="leaveDate" class="form-control"
+                               min="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold small">Reason <span class="text-muted">(optional)</span></label>
+                        <input type="text" name="reason" class="form-control"
+                               placeholder="e.g. Conference, Personal leave…" maxlength="200" />
+                    </div>
+                    <button type="submit" class="btn btn-danger w-100">
+                        <i class="bi bi-calendar-plus me-1"></i>Mark Unavailable
+                    </button>
+                </form>
+
+                <!-- Existing leave dates -->
+                @if (!Model.LeaveDates.Any())
+                {
+                    <p class="text-muted small text-center py-2">No upcoming leave dates.</p>
+                }
+                else
+                {
+                    <ul class="leave-list">
+                        @foreach (var lv in Model.LeaveDates)
+                        {
+                            <li class="leave-item" id="leave-@lv.Id">
+                                <div>
+                                    <div class="fw-semibold small">@lv.LeaveDate.ToString("ddd, dd MMM yyyy")</div>
+                                    @if (!string.IsNullOrEmpty(lv.Reason))
+                                    {
+                                        <div class="text-muted" style="font-size:.78rem">@lv.Reason</div>
+                                    }
+                                </div>
+                                <form class="remove-leave-form d-inline"
+                                      data-id="@lv.Id" data-docid="@Model.DoctorId">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn-icon text-danger" title="Remove">
+                                        <i class="bi bi-trash3-fill"></i>
+                                    </button>
+                                </form>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+<script>
+    // ── Toggle available/unavailable dims the time slots ─────────────────────
+    document.querySelectorAll('.sched-toggle').forEach(chk => {
+        chk.addEventListener('change', function () {
+            const row = this.dataset.row;
+            const slots = document.getElementById(`slots_${row}`);
+            if (this.checked) {
+                slots.style.opacity = '1';
+                slots.style.pointerEvents = 'auto';
+            } else {
+                slots.style.opacity = '.35';
+                slots.style.pointerEvents = 'none';
+            }
+        });
+    });
+
+    // ── Remove leave date (AJAX) ──────────────────────────────────────────────
+    document.querySelectorAll('.remove-leave-form').forEach(form => {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const id    = this.dataset.id;
+            const docId = this.dataset.docid;
+            const token = this.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            fetch('/Schedule/RemoveLeaveDate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
+                },
+                body: `leaveDateId=${id}&doctorId=${docId}`
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok) {
+                    document.getElementById(`leave-${id}`)?.remove();
+                }
+            });
+        });
+    });
+</script>
+}

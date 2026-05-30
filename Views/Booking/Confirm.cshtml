@@ -1,0 +1,56 @@
+@model HospitalOPBooking.Models.BookingConfirmViewModel
+@{
+    ViewData["Title"] = "Booking Confirmed";
+}
+
+<div class="confirm-wrapper">
+    <div class="confirm-card">
+
+        <div class="confirm-icon">
+            <i class="bi bi-check-circle-fill"></i>
+        </div>
+
+        <h2 class="fw-bold mt-4 mb-2">Booking Confirmed!</h2>
+        <p class="text-muted mb-4"><i class="bi bi-exclamation-circle me-1"></i>Your OP appointment has been successfully booked.</p>
+
+        <!-- Token highlight -->
+        <div class="token-highlight mb-4">
+            <div class="token-label"><i class="bi bi-ticket-perforated me-1"></i>Your Token Number</div>
+            <div class="token-number">#@Model.TokenNumber</div>
+        </div>
+
+        <!-- Details -->
+        <div class="confirm-details">
+            <div class="confirm-row">
+                <span class="confirm-label"><i class="bi bi-person-fill me-2"></i>Patient</span>
+                <span class="confirm-value">@Model.BookingForName</span>
+            </div>
+            <div class="confirm-row">
+                <span class="confirm-label"><i class="bi bi-hospital-fill me-2"></i>Hospital</span>
+                <span class="confirm-value">@Model.HospitalName</span>
+            </div>
+            <div class="confirm-row">
+                <span class="confirm-label"><i class="bi bi-person-badge-fill me-2"></i>Doctor</span>
+                <span class="confirm-value">Dr. @Model.DoctorName</span>
+            </div>
+            <div class="confirm-row">
+                <span class="confirm-label"><i class="bi bi-calendar-event me-2"></i>Date</span>
+                <span class="confirm-value">@Model.BookingDate.ToString("dddd, dd MMMM yyyy")</span>
+            </div>
+            <div class="confirm-row">
+                <span class="confirm-label"><i class="bi bi-hash me-2"></i>Booking ID</span>
+                <span class="confirm-value text-muted">#@Model.BookingId</span>
+            </div>
+        </div>
+
+        <div class="d-flex gap-3 mt-5 flex-wrap justify-content-center">
+            <a asp-controller="Booking" asp-action="Dashboard" class="btn btn-primary px-4">
+                <i class="bi bi-house-fill me-2"></i>Back to Dashboard
+            </a>
+            <button onclick="window.print()" class="btn btn-outline-secondary px-4">
+                <i class="bi bi-printer me-2"></i>Print Confirmation
+            </button>
+        </div>
+
+    </div>
+</div>

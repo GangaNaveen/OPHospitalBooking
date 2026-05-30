@@ -1,0 +1,70 @@
+@{
+    ViewData["Title"] = "Register";
+    var role = ViewBag.Role as string ?? "Patient";
+    var isHospital = role == "Hospital";
+}
+
+<div class="auth-wrapper">
+    <div class="auth-card">
+
+        <!-- Logo Section -->
+        <div class="auth-logo-section">
+            <img src="~/images/logo.png" alt="Hospital OP Booking Logo" class="auth-logo" />
+        </div>
+
+        <!-- Header -->
+        <div class="auth-header">
+            <div class="auth-icon">
+                <i class="bi bi-hospital"></i>
+            </div>
+            <h2 class="auth-title">Create Account</h2>
+            <p class="auth-subtitle">Join Hospital OP Booking System</p>
+        </div>
+
+        <!-- Role Toggle -->
+        <div class="role-toggle-wrapper">
+            <div class="role-toggle">
+                <a href="@Url.Action("Register", "Account", new { role = "Patient" })"
+                   class="role-btn @(!isHospital ? "active" : "")">
+                    <i class="bi bi-person-fill"></i> Patient
+                </a>
+                <a href="@Url.Action("Register", "Account", new { role = "Hospital" })"
+                   class="role-btn @(isHospital ? "active" : "")">
+                    <i class="bi bi-building-fill-cross"></i> Hospital
+                </a>
+            </div>
+        </div>
+
+        @if (!isHospital)
+        {
+            await Html.RenderPartialAsync("_PatientRegisterForm");
+        }
+        else
+        {
+            await Html.RenderPartialAsync("_HospitalRegisterForm");
+        }
+
+        <div class="auth-footer">
+            Already have an account?
+            <a asp-action="Login" asp-controller="Account" class="auth-link">Sign In</a>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        function togglePassword(id, btn) {
+            const input = document.getElementById(id);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('bi-eye', 'bi-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('bi-eye-slash', 'bi-eye');
+            }
+        }
+    </script>
+}
