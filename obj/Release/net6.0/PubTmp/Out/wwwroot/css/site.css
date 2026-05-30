@@ -1,0 +1,1197 @@
+/* ── Base ─────────────────────────────────────────────────────────────────── */
+html {
+  font-size: 14px;
+  position: relative;
+  min-height: 100%;
+}
+
+@media (min-width: 768px) {
+  html { font-size: 16px; }
+}
+
+body {
+  margin-bottom: 60px;
+  background: linear-gradient(135deg, #f0f4f8 0%, #e8f1f7 100%);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  color: #2c3e50;
+}
+
+/* ── Auth Wrapper ─────────────────────────────────────────────────────────── */
+.auth-wrapper {
+  min-height: calc(100vh - 140px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+}
+
+.auth-card {
+  background: #ffffff;
+  border-radius: 1.25rem;
+  box-shadow: 0 12px 50px rgba(0, 0, 0, 0.15);
+  padding: 2.5rem 2rem;
+  width: 100%;
+  max-width: 520px;
+  animation: slideUp 0.35s ease;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #0d6efd 0%, #0a58ca 100%);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Auth Header ──────────────────────────────────────────────────────────── */
+.auth-header {
+  text-align: center;
+  margin-bottom: 1.75rem;
+}
+.auth-logo-section {
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.auth-logo {
+  max-width: 280px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(13, 110, 253, 0.2));
+  animation: slideDown 0.5s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.auth-icon {
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  box-shadow: 0 4px 16px rgba(13, 110, 253, 0.35);
+}
+
+.auth-icon i {
+  font-size: 2rem;
+  color: #fff;
+}
+
+.auth-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 0.25rem;
+}
+
+.auth-subtitle {
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin-bottom: 0;
+}
+
+/* ── Role Toggle ──────────────────────────────────────────────────────────── */
+.role-toggle-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.75rem;
+}
+
+.role-toggle {
+  display: inline-flex;
+  background: #e9ecef;
+  border-radius: 50px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.role-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.45rem 1.25rem;
+  border-radius: 50px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: #6c757d;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+.role-btn:hover {
+  color: #0d6efd;
+  background: rgba(13, 110, 253, 0.08);
+}
+
+.role-btn.active {
+  background: #0d6efd;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(13, 110, 253, 0.4);
+}
+
+/* ── Form Controls ────────────────────────────────────────────────────────── */
+.form-floating > .form-control,
+.form-floating > .form-select {
+  border-radius: 0.6rem;
+  border: 2px solid #dee2e6;
+  transition: border-color 0.25s, box-shadow 0.25s, background-color 0.25s;
+  background-color: #fff;
+  font-weight: 500;
+}
+
+.form-floating > .form-control:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.2);
+  background-color: #fff;
+}
+
+.form-floating > .form-control:not(:focus):not(:placeholder-shown),
+.form-floating > .form-select:not(:focus):not(:placeholder-shown) {
+  border-color: #0d6efd;
+}
+
+.form-control, .form-select {
+  border-radius: 0.6rem;
+  border: 2px solid #dee2e6;
+  transition: all 0.25s ease;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.15);
+}
+
+.form-floating > textarea.form-control {
+  padding-top: 1.625rem;
+}
+
+/* ── Password Field ───────────────────────────────────────────────────────── */
+.password-field {
+  position: relative;
+}
+
+.toggle-pw {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 4px;
+  z-index: 10;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.toggle-pw:hover { color: #0d6efd; }
+
+/* ── Submit Button ────────────────────────────────────────────────────────── */
+.btn-auth {
+  padding: 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 0.6rem;
+  letter-spacing: 0.3px;
+  transition: transform 0.15s, box-shadow 0.15s, background-color 0.2s;
+  border: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-auth::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.2);
+  transition: left 0.3s ease;
+}
+
+.btn-auth:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(13, 110, 253, 0.4);
+}
+
+.btn-auth:hover::before { left: 100%; }
+
+.btn-auth:active { transform: translateY(0); }
+
+/* ── Auth Footer ──────────────────────────────────────────────────────────── */
+.auth-footer {
+  text-align: center;
+  margin-top: 1.5rem;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.auth-link {
+  color: #0d6efd;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-link:hover {
+  text-decoration: underline;
+  color: #0a58ca;
+}
+
+/* ── Navbar ───────────────────────────────────────────────────────────────── */
+.navbar-brand {
+  font-size: 1.15rem;
+  display: flex !important;
+  align-items: center;
+  gap: 0.5rem !important;
+}
+
+.navbar-logo {
+  max-width: 50px;
+  height: 50px;
+  width: 50px;
+  object-fit: contain;
+  filter: brightness(1.25) saturate(1.1);
+  margin: 0;
+}
+
+.nav-link {
+  transition: all 0.25s ease;
+}
+
+.nav-link:hover {
+  color: rgba(255, 255, 255, 0.9) !important;
+  transform: translateY(-1px);
+}
+
+/* ── Footer ───────────────────────────────────────────────────────────────── */
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+}
+
+/* ── Responsive tweaks ────────────────────────────────────────────────────── */
+@media (max-width: 575.98px) {
+  .auth-card {
+    padding: 1.75rem 1.25rem;
+    border-radius: 1rem;
+  }
+
+  .auth-title { font-size: 1.35rem; }
+
+  .role-btn {
+    padding: 0.4rem 0.9rem;
+    font-size: 0.8rem;
+  }
+
+  .auth-icon {
+    width: 60px;
+    height: 60px;
+  }
+
+  .auth-icon i { font-size: 1.6rem; }
+}
+
+/* ── Login hint ───────────────────────────────────────────────────────────── */
+.login-hint {
+  margin-top: 1rem;
+  padding: 0.6rem 0.9rem;
+  background: #f0f6ff;
+  border: 1px solid #cfe2ff;
+  border-radius: 0.5rem;
+  font-size: 0.82rem;
+  color: #4a6fa5;
+  text-align: center;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   PATIENT DASHBOARD
+══════════════════════════════════════════════════════════════════════════════ */
+
+/* Welcome banner */
+.dash-banner {
+  background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+  border-radius: 1rem;
+  padding: 1.5rem 1.75rem;
+  box-shadow: 0 6px 24px rgba(13,110,253,.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.dash-banner::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+}
+
+.dash-avatar {
+  width: 56px; height: 56px;
+  background: rgba(255,255,255,.2);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-size: 1.6rem; color: #fff;
+}
+
+/* Section title */
+.section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  display: flex;
+  align-items: center;
+}
+
+/* ── My Bookings cards ── */
+.booking-card {
+  background: #fff;
+  border: 2px solid #e9ecef;
+  border-radius: .85rem;
+  padding: 1.1rem 1.2rem;
+  box-shadow: 0 3px 12px rgba(0,0,0,.08);
+  transition: all .3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.booking-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, #0d6efd, #0a58ca);
+  transform: scaleY(0);
+  transition: transform 0.3s ease;
+}
+
+.booking-card:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,.15);
+  transform: translateY(-2px);
+  border-color: #0d6efd;
+}
+
+.booking-card:hover::before { transform: scaleY(1); }
+
+.booking-today  { border-color: #0d6efd; background: linear-gradient(135deg, #f0f6ff 0%, #e7f1ff 100%); }
+.booking-past   { opacity: .7; border-color: #dee2e6; }
+.booking-done   { border-color: #198754; background: linear-gradient(135deg, #f0fff4 0%, #e8f7f1 100%); }
+
+.booking-hospital { font-weight: 700; font-size: .95rem; color: #1a1a2e; }
+.booking-doctor   { font-size: .85rem; color: #495057; }
+.booking-date     { font-size: .82rem; color: #6c757d; }
+
+.token-badge {
+  background: #0d6efd;
+  color: #fff;
+  font-size: .75rem;
+  font-weight: 700;
+  padding: .2rem .55rem;
+  border-radius: 50px;
+  white-space: nowrap;
+}
+
+/* ── Hospital cards ── */
+.hosp-card {
+  background: #fff;
+  border: 2px solid #e9ecef;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,.08);
+  transition: transform .3s, box-shadow .3s, border-color .3s;
+  height: 100%;
+  display: flex; flex-direction: column;
+  position: relative;
+}
+
+.hosp-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #0d6efd, #0a58ca);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+  transform-origin: left;
+}
+
+.hosp-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 32px rgba(0,0,0,.15);
+  border-color: #0d6efd;
+}
+
+.hosp-card:hover::after { transform: scaleX(1); }
+
+.hosp-card-pinned {
+  border-color: #0d6efd;
+  box-shadow: 0 4px 20px rgba(13,110,253,.25);
+}
+
+.pinned-label {
+  background: #0d6efd;
+  color: #fff;
+  font-size: .75rem;
+  font-weight: 600;
+  padding: .3rem .85rem;
+}
+
+.hosp-card-body {
+  padding: 1rem 1.1rem;
+  flex: 1;
+}
+
+.hosp-name   { font-weight: 700; font-size: 1rem; color: #1a1a2e; margin-bottom: .2rem; }
+.hosp-doctor { font-size: .875rem; color: #495057; }
+
+.hosp-card-footer {
+  padding: .75rem 1.1rem;
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
+.op-count-badge {
+  font-size: .78rem;
+  font-weight: 600;
+  color: #e85d04;
+  background: #fff3e0;
+  border: 1px solid #ffcc80;
+  border-radius: 50px;
+  padding: .2rem .65rem;
+  white-space: nowrap;
+}
+.op-count-empty {
+  color: #2e7d32;
+  background: #e8f5e9;
+  border-color: #a5d6a7;
+}
+
+.book-btn { border-radius: 50px; font-size: .8rem; white-space: nowrap; }
+
+/* Empty state */
+.empty-state {
+  text-align: center; padding: 3rem 1rem; color: #adb5bd;
+}
+.empty-state i { font-size: 3rem; display: block; margin-bottom: .75rem; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   BOOK APPOINTMENT
+══════════════════════════════════════════════════════════════════════════════ */
+
+.book-wrapper {
+  display: flex; justify-content: center;
+  padding: 1.5rem 1rem;
+}
+
+.book-card {
+  background: #fff;
+  border-radius: 1.25rem;
+  box-shadow: 0 12px 50px rgba(0,0,0,.12);
+  padding: 2rem 1.75rem;
+  width: 100%; max-width: 560px;
+  animation: slideUp .35s ease;
+  border: 1px solid rgba(0,0,0,.05);
+}
+
+.book-header { margin-bottom: 1.5rem; }
+
+.back-link {
+  font-size: .85rem; color: #6c757d; text-decoration: none;
+}
+.back-link:hover { color: #0d6efd; }
+
+/* Doctor chips */
+.doctor-grid {
+  display: flex; flex-wrap: wrap; gap: .7rem; margin-top: .5rem;
+}
+
+.doctor-chip {
+  display: inline-flex; align-items: center;
+  padding: .55rem 1.1rem;
+  border: 2px solid #dee2e6;
+  border-radius: 50px;
+  background: #fff;
+  font-size: .875rem;
+  cursor: pointer;
+  transition: all .25s;
+  color: #495057;
+  box-shadow: 0 2px 6px rgba(0,0,0,.05);
+}
+.doctor-chip:hover {
+  border-color: #0d6efd;
+  color: #0d6efd;
+  background: #f0f6ff;
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
+  transform: translateY(-2px);
+}
+.doctor-chip.active {
+  border-color: #0d6efd;
+  background: linear-gradient(135deg, #0d6efd, #0a58ca);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(13, 110, 253, 0.35);
+}
+
+/* OP info panel */
+.op-info-panel {
+  background: #f0f6ff;
+  border: 1.5px solid #cfe2ff;
+  border-radius: .85rem;
+  padding: 1rem 1.25rem;
+}
+
+.op-stat { text-align: center; min-width: 80px; }
+.op-stat-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .5px; color: #6c757d; }
+.op-stat-value { font-size: 2rem; font-weight: 800; color: #0d6efd; line-height: 1.1; }
+.op-stat-note  { flex: 1; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   BOOKING CONFIRM
+══════════════════════════════════════════════════════════════════════════════ */
+
+.confirm-wrapper {
+  display: flex; justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.confirm-card {
+  background: #fff;
+  border-radius: 1.25rem;
+  box-shadow: 0 12px 50px rgba(0,0,0,.12);
+  padding: 2.5rem 2rem;
+  width: 100%; max-width: 480px;
+  text-align: center;
+  animation: slideUp .35s ease;
+  border: 1px solid rgba(0,0,0,.05);
+}
+
+.confirm-icon {
+  font-size: 4rem;
+  color: #198754;
+  line-height: 1;
+}
+
+.token-highlight {
+  background: linear-gradient(135deg, #0d6efd, #0a58ca);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  color: #fff;
+}
+.token-label  { font-size: .8rem; opacity: .85; text-transform: uppercase; letter-spacing: .5px; }
+.token-number { font-size: 3.5rem; font-weight: 900; line-height: 1; }
+
+.confirm-details {
+  background: #f8f9fa;
+  border-radius: .85rem;
+  padding: 1rem 1.25rem;
+  text-align: left;
+}
+
+.confirm-row {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  padding: .5rem 0;
+  border-bottom: 1px solid #e9ecef;
+  gap: .5rem;
+}
+.confirm-row:last-child { border-bottom: none; }
+
+.confirm-label { font-size: .85rem; color: #6c757d; white-space: nowrap; }
+.confirm-value { font-size: .9rem; font-weight: 600; color: #1a1a2e; text-align: right; }
+
+/* ── Responsive ── */
+@media (max-width: 575.98px) {
+  .dash-banner { padding: 1.1rem 1.25rem; }
+  .hosp-card-footer { flex-direction: column; align-items: flex-start; }
+  .book-card, .confirm-card { padding: 1.5rem 1.1rem; }
+  .token-number { font-size: 2.75rem; }
+}
+
+@media print {
+  header, footer, .btn, .back-link { display: none !important; }
+  .confirm-card { box-shadow: none; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   HOSPITAL DASHBOARD
+══════════════════════════════════════════════════════════════════════════════ */
+
+/* Stat cards */
+.stat-card {
+  border-radius: 1rem;
+  padding: 1.25rem 1rem;
+  text-align: center;
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(0,0,0,.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0,0,0,.2);
+}
+
+.stat-blue   { background: linear-gradient(135deg,#0d6efd,#0a58ca); }
+.stat-orange { background: linear-gradient(135deg,#fd7e14,#e8590c); }
+.stat-green  { background: linear-gradient(135deg,#198754,#146c43); }
+.stat-yellow { background: linear-gradient(135deg,#ffc107,#e0a800); color:#1a1a2e !important; }
+
+.stat-icon  { font-size: 1.6rem; opacity: .85; margin-bottom: .25rem; }
+.stat-value { font-size: 2rem; font-weight: 800; line-height: 1; }
+.stat-label { font-size: .75rem; opacity: .85; margin-top: .2rem; text-transform: uppercase; letter-spacing: .4px; }
+
+/* Panel card */
+.panel-card {
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 4px 16px rgba(0,0,0,.1);
+  overflow: hidden;
+  border: 1px solid rgba(0,0,0,.05);
+  transition: box-shadow 0.3s ease;
+}
+
+.panel-card:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,.15);
+}
+
+.panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-bottom: 2px solid #e9ecef;
+  font-weight: 700; font-size: .95rem;
+}
+.panel-body { padding: 1.1rem 1.25rem; }
+
+/* Doctor list */
+.doctor-list { list-style: none; padding: 0; margin: 0; }
+
+.doctor-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .55rem .5rem;
+  border-bottom: 1px solid #f0f0f0;
+  border-radius: .4rem;
+  transition: background .15s;
+}
+.doctor-item:last-child { border-bottom: none; }
+.doctor-item:hover { background: #f8f9fa; }
+
+.doctor-inactive .doctor-item-name { opacity: .45; text-decoration: line-through; }
+
+.doctor-item-name { font-size: .9rem; flex: 1; }
+.doctor-item-actions { display: flex; gap: .35rem; }
+
+.btn-icon {
+  background: none; border: none; cursor: pointer;
+  padding: .25rem .35rem; border-radius: .35rem;
+  font-size: 1rem; line-height: 1;
+  transition: background .15s;
+}
+.btn-icon:hover { background: #e9ecef; }
+
+/* Queue table */
+.queue-table th {
+  font-size: .78rem; text-transform: uppercase;
+  letter-spacing: .4px; color: #6c757d;
+  background: #f8f9fa; border-bottom: 2px solid #e9ecef;
+  padding: .6rem .75rem;
+}
+.queue-table td { padding: .65rem .75rem; vertical-align: middle; font-size: .875rem; }
+
+.row-done td { opacity: .55; }
+
+.token-pill {
+  display: inline-block; padding: .2rem .6rem;
+  border-radius: 50px; font-weight: 700; font-size: .8rem;
+}
+.token-active { background: #cfe2ff; color: #0a58ca; }
+.token-done   { background: #d1e7dd; color: #146c43; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   PATIENT BOOKING CARD – queue status
+══════════════════════════════════════════════════════════════════════════════ */
+.booking-done { border-color: #198754; background: #f0fff4; }
+
+.token-done-badge { background: #198754 !important; }
+
+.queue-status {
+  font-size: .8rem;
+  color: #495057;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: .4rem;
+  padding: .3rem .6rem;
+}
+
+@keyframes blink {
+  0%,100% { opacity: 1; }
+  50%      { opacity: .4; }
+}
+.blink { animation: blink 1s infinite; }
+
+/* ── Responsive ── */
+@media (max-width: 575.98px) {
+  .stat-value { font-size: 1.6rem; }
+  .queue-table th, .queue-table td { font-size: .78rem; padding: .5rem; }
+}
+
+/* ── Doctor specialization badge (list) ──────────────────────────────────── */
+.doc-spec-badge {
+  display: inline-block;
+  font-size: .72rem;
+  color: #0a58ca;
+  background: #e7f1ff;
+  border: 1px solid #b6d4fe;
+  border-radius: 50px;
+  padding: .05rem .5rem;
+  margin-top: .15rem;
+  font-weight: 500;
+}
+
+/* ── Specialization inside doctor chip (booking form) ────────────────────── */
+.doctor-chip {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.chip-spec {
+  display: block;
+  font-size: .7rem;
+  opacity: .8;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.doctor-chip.active .chip-spec { opacity: .9; }
+
+/* ── Doctor fee text in list ─────────────────────────────────────────────── */
+.doc-fee-text {
+  font-size: .72rem;
+  color: #198754;
+  font-weight: 500;
+}
+
+/* ── Step sections (BookForPatient) ──────────────────────────────────────── */
+.step-section {
+  border: 1.5px solid #e9ecef;
+  border-radius: .85rem;
+  padding: 1rem 1.1rem;
+  background: #fafbfc;
+}
+
+.step-label {
+  font-weight: 700;
+  font-size: .9rem;
+  color: #1a1a2e;
+  margin-bottom: .75rem;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+.step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px; height: 22px;
+  background: #0d6efd;
+  color: #fff;
+  border-radius: 50%;
+  font-size: .75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ── Patient mode toggle ─────────────────────────────────────────────────── */
+.patient-mode-toggle {
+  display: flex;
+  gap: .4rem;
+  flex-wrap: wrap;
+}
+
+.mode-btn {
+  padding: .35rem .9rem;
+  border: 1.5px solid #dee2e6;
+  border-radius: 50px;
+  background: #fff;
+  font-size: .82rem;
+  font-weight: 600;
+  color: #6c757d;
+  cursor: pointer;
+  transition: all .2s;
+}
+.mode-btn:hover  { border-color: #0d6efd; color: #0d6efd; }
+.mode-btn.active { background: #0d6efd; border-color: #0d6efd; color: #fff; }
+
+/* ── Patient found / not found boxes ─────────────────────────────────────── */
+.patient-found-box {
+  background: #d1e7dd;
+  border: 1px solid #a3cfbb;
+  border-radius: .5rem;
+  padding: .45rem .75rem;
+  font-size: .85rem;
+  color: #0f5132;
+}
+
+.patient-notfound-box {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: .5rem;
+  padding: .45rem .75rem;
+  font-size: .85rem;
+  color: #664d03;
+}
+
+/* ── New patient form ────────────────────────────────────────────────────── */
+.new-patient-form {
+  background: #f0f6ff;
+  border: 1.5px solid #cfe2ff;
+  border-radius: .75rem;
+  padding: 1rem;
+  margin-top: .5rem;
+}
+
+/* ── Fee panel ───────────────────────────────────────────────────────────── */
+.fee-panel {
+  background: #f8f9fa;
+  border: 1.5px solid #e9ecef;
+  border-radius: .75rem;
+  padding: .75rem 1rem;
+}
+
+.fee-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: .3rem 0;
+  border-bottom: 1px solid #e9ecef;
+  font-size: .875rem;
+}
+.fee-row:last-child { border-bottom: none; }
+
+.fee-label { color: #495057; }
+.fee-value { font-weight: 700; font-size: 1rem; color: #0d6efd; }
+
+/* ── Doctor required validation message ──────────────────────────────────── */
+.doctor-required-msg {
+  margin-top: .5rem;
+  padding: .4rem .75rem;
+  background: #fff5f5;
+  border: 1.5px solid #f5c2c7;
+  border-radius: .5rem;
+  color: #842029;
+  font-size: .85rem;
+  font-weight: 500;
+}
+/* ── Enhanced button styles ────────────────────────────────────────────── */
+.btn {
+  border-radius: 0.6rem;
+  font-weight: 600;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #0d6efd, #0a58ca);
+  border: none;
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #0a58ca, #084298);
+  box-shadow: 0 6px 20px rgba(13, 110, 253, 0.4);
+  transform: translateY(-2px);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #198754, #146c43);
+  border: none;
+  box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3);
+}
+
+.btn-success:hover {
+  background: linear-gradient(135deg, #146c43, #0f5132);
+  box-shadow: 0 6px 20px rgba(25, 135, 84, 0.4);
+  transform: translateY(-2px);
+}
+
+.btn-outline-primary {
+  border: 2px solid #0d6efd;
+  color: #0d6efd;
+  transition: all 0.25s ease;
+}
+
+.btn-outline-primary:hover {
+  background: #0d6efd;
+  border-color: #0d6efd;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+}
+
+.btn-sm {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  border-radius: 0.5rem;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: .25rem .35rem;
+  border-radius: .35rem;
+  font-size: 1rem;
+  line-height: 1;
+  transition: all .2s ease;
+  color: #495057;
+}
+
+.btn-icon:hover {
+  background: #e9ecef;
+  color: #0d6efd;
+  transform: scale(1.1);
+}
+
+/* ── Badge enhancements ────────────────────────────────────────────────── */
+.badge {
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  padding: 0.4rem 0.7rem;
+  border-radius: 50px;
+}
+
+/* ── Home Logo Section ────────────────────────────────────────────────────── */
+.home-logo-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.home-logo {
+  max-width: 400px;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 20px rgba(13, 110, 253, 0.15));
+  animation: slideUp 0.5s ease;
+}
+
+@media (max-width: 768px) {
+  .home-logo {
+    max-width: 320px;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .home-logo {
+    max-width: 280px;
+  }
+
+  .auth-logo {
+    max-width: 240px;
+  }
+}
+
+/* ── Doctor availability panel (booking page) ────────────────────────────── */
+.avail-panel {
+  border-radius: .6rem;
+  padding: .6rem 1rem;
+  font-size: .875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+
+.avail-available {
+  background: #d1e7dd;
+  border: 1.5px solid #a3cfbb;
+  color: #0f5132;
+}
+
+.avail-unavailable {
+  background: #f8d7da;
+  border: 1.5px solid #f5c2c7;
+  color: #842029;
+}
+
+.avail-slot {
+  background: rgba(255,255,255,.55);
+  border-radius: 50px;
+  padding: .15rem .6rem;
+  font-size: .8rem;
+  white-space: nowrap;
+}
+
+/* ── Patient card (hospital BookForPatient) ──────────────────────────────── */
+.patient-card {
+  border: 1.5px solid #0d6efd;
+  border-radius: .85rem;
+  padding: 1rem 1.1rem;
+  background: #f0f6ff;
+  margin-top: .5rem;
+}
+
+.patient-card-header {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin-bottom: .25rem;
+}
+
+.patient-card-avatar {
+  width: 42px; height: 42px;
+  background: #0d6efd;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.patient-card-name {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #1a1a2e;
+}
+
+.patient-card-meta {
+  font-size: .8rem;
+  color: #6c757d;
+}
+
+/* ── Booking-for chips ───────────────────────────────────────────────────── */
+.booking-for-chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: .5rem .85rem;
+  border: 1.5px solid #dee2e6;
+  border-radius: .65rem;
+  background: #fff;
+  cursor: pointer;
+  transition: all .2s;
+  min-width: 80px;
+  text-align: center;
+}
+
+.booking-for-chip:hover {
+  border-color: #0d6efd;
+  background: #f0f6ff;
+}
+
+.booking-for-chip.active {
+  border-color: #0d6efd;
+  background: #0d6efd;
+  color: #fff;
+}
+
+.booking-for-chip .chip-name {
+  font-weight: 600;
+  font-size: .82rem;
+  line-height: 1.2;
+}
+
+.booking-for-chip .chip-label {
+  font-size: .7rem;
+  opacity: .8;
+}
+
+.booking-for-chip.active .chip-label { opacity: .9; }
+
+/* ── Fee Rules Modal ─────────────────────────────────────────────────────── */
+.fee-rules-base-fee {
+  background: #f0f6ff;
+  border: 1.5px solid #cfe2ff;
+  border-radius: .75rem;
+  padding: .85rem 1rem;
+}
+
+.fee-rules-table th {
+  font-size: .75rem;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  color: #6c757d;
+  background: #f8f9fa;
+  border-bottom: 2px solid #e9ecef;
+  padding: .5rem .6rem;
+}
+
+.fee-rules-table td {
+  padding: .4rem .5rem;
+  vertical-align: middle;
+}
+
+.fee-rules-hint {
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  border-radius: .5rem;
+  padding: .6rem .85rem;
+  font-size: .8rem;
+  color: #5d4037;
+}
+
+/* ── Fee grid (add doctor form) ──────────────────────────────────────────── */
+.fee-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .5rem;
+}
+
+@media (max-width: 400px) {
+  .fee-grid { grid-template-columns: 1fr; }
+}
