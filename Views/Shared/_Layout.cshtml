@@ -85,6 +85,11 @@
                                     <span class="badge ms-1" style="background: rgba(255,255,255,0.2); color: white;">@userRole</span>
                                 </span>
                             </li>
+                            <li class="nav-item me-2">
+                                <button type="button" class="btn btn-sm" data-bs-toggle="modal" data-bs-target="#changePasswordModal" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 50px; padding: 0.4rem 1rem;">
+                                    <i class="bi bi-key me-1"></i>Change Password
+                                </button>
+                            </li>
                             <li class="nav-item">
                                 <form asp-action="Logout" asp-controller="Account" method="post" class="d-inline">
                                     @Html.AntiForgeryToken()
@@ -126,6 +131,53 @@
             </div>
         </div>
     </footer>
+
+    <!-- Change Password Modal -->
+    @if (Context.Session.GetString("UserEmail") != null)
+    {
+        <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="changePasswordModalLabel">
+                            <i class="bi bi-key me-2"></i>Change Password
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="changePasswordForm">
+                            <div class="mb-3">
+                                <label for="currentPassword" class="form-label">Current Password <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
+                                <div class="invalid-feedback" id="currentPasswordError"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="newPassword" class="form-label">New Password <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" id="newPassword" name="newPassword" required minlength="8">
+                                <div class="form-text">Password must be at least 8 characters long.</div>
+                                <div class="invalid-feedback" id="newPasswordError"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="confirmPassword" class="form-label">Confirm New Password <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+                                <div class="invalid-feedback" id="confirmPasswordError"></div>
+                            </div>
+                            <div class="alert alert-danger d-none" id="changePasswordAlert" role="alert"></div>
+                            <div class="alert alert-success d-none" id="changePasswordSuccess" role="alert"></div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle me-1"></i>Cancel
+                        </button>
+                        <button type="button" class="btn btn-primary" id="savePasswordBtn">
+                            <i class="bi bi-check-circle me-1"></i>Save Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 
     <!-- PWA Auth Data (for IndexedDB persistence) -->
     @if (TempData["LoginSuccess"] != null && TempData["UserEmail"] != null)
@@ -185,6 +237,160 @@
             }
         });
     </script>
+    <!-- Change Password JavaScript -->
+    @if (Context.Session.GetString("UserEmail") != null)
+    {
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const form = document.getElementById('changePasswordForm');
+                const saveBtn = document.getElementById('savePasswordBtn');
+                const modal = document.getElementById('changePasswordModal');
+                const bsModal = new bootstrap.Modal(modal);
+                
+                // Clear form and errors when modal is closed
+                modal.addEventListener('hidden.bs.modal', function() {
+                    form.reset();
+                    clearErrors();
+                    document.getElementById('changePasswordAlert').classList.add('d-none');
+                    document.getElementById('changePasswordSuccess').classList.add('d-none');
+                });
+                
+                // Form validation
+                function validateForm() {
+                    clearErrors();
+                    let isValid = true;
+                    
+                    const currentPassword = document.getElementById('currentPassword').value.trim();
+                    const newPassword = document.getElementById('newPassword').value.trim();
+                    const confirmPassword = document.getElementById('confirmPassword').value.trim();
+                    
+                    // Validate current password
+                    if (!currentPassword) {
+                        showError('currentPassword', 'Current password is required');
+                        isValid = false;
+                    }
+                    
+                    // Validate new password
+                    if (!newPassword) {
+                        showError('newPassword', 'New password is required');
+                        isValid = false;
+                    } else if (newPassword.length < 8) {
+                        showError('newPassword', 'Password must be at least 8 characters long');
+                        isValid = false;
+                    }
+                    
+                    // Validate confirm password
+                    if (!confirmPassword) {
+                        showError('confirmPassword', 'Please confirm your new password');
+                        isValid = false;
+                    } else if (newPassword !== confirmPassword) {
+                        showError('confirmPassword', 'New password and confirmation password do not match');
+                        isValid = false;
+                    }
+                    
+                    return isValid;
+                }
+                
+                function showError(fieldId, message) {
+                    const field = document.getElementById(fieldId);
+                    const errorDiv = document.getElementById(fieldId + 'Error');
+                    field.classList.add('is-invalid');
+                    errorDiv.textContent = message;
+                }
+                
+                function clearErrors() {
+                    const fields = ['currentPassword', 'newPassword', 'confirmPassword'];
+                    fields.forEach(fieldId => {
+                        const field = document.getElementById(fieldId);
+                        const errorDiv = document.getElementById(fieldId + 'Error');
+                        field.classList.remove('is-invalid');
+                        errorDiv.textContent = '';
+                    });
+                }
+                
+                function showAlert(message, isSuccess = false) {
+                    const alertDiv = isSuccess ? 
+                        document.getElementById('changePasswordSuccess') : 
+                        document.getElementById('changePasswordAlert');
+                    const otherAlert = isSuccess ? 
+                        document.getElementById('changePasswordAlert') : 
+                        document.getElementById('changePasswordSuccess');
+                    
+                    otherAlert.classList.add('d-none');
+                    alertDiv.textContent = message;
+                    alertDiv.classList.remove('d-none');
+                }
+                
+                // Save button click handler
+                saveBtn.addEventListener('click', async function() {
+                    if (!validateForm()) {
+                        return;
+                    }
+                    
+                    // Disable button and show loading state
+                    saveBtn.disabled = true;
+                    const originalText = saveBtn.innerHTML;
+                    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
+                    
+                    try {
+                        const formData = {
+                            currentPassword: document.getElementById('currentPassword').value,
+                            newPassword: document.getElementById('newPassword').value,
+                            confirmPassword: document.getElementById('confirmPassword').value
+                        };
+                        
+                        // Get anti-forgery token
+                        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                        
+                        const response = await fetch('@Url.Action("ChangePassword", "Account")', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'RequestVerificationToken': token
+                            },
+                            body: JSON.stringify(formData)
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            showAlert(result.message, true);
+                            form.reset();
+                            clearErrors();
+                            
+                            // Close modal after 1.5 seconds
+                            setTimeout(() => {
+                                bsModal.hide();
+                            }, 1500);
+                        } else {
+                            showAlert(result.message, false);
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        showAlert('An error occurred while changing password. Please try again.', false);
+                    } finally {
+                        // Re-enable button
+                        saveBtn.disabled = false;
+                        saveBtn.innerHTML = originalText;
+                    }
+                });
+                
+                // Real-time validation for confirm password
+                document.getElementById('confirmPassword').addEventListener('input', function() {
+                    const newPassword = document.getElementById('newPassword').value;
+                    const confirmPassword = this.value;
+                    
+                    if (confirmPassword && newPassword !== confirmPassword) {
+                        showError('confirmPassword', 'Passwords do not match');
+                    } else {
+                        this.classList.remove('is-invalid');
+                        document.getElementById('confirmPasswordError').textContent = '';
+                    }
+                });
+            });
+        </script>
+    }
+    
     
     @await RenderSectionAsync("Scripts", required: false)
 </body>

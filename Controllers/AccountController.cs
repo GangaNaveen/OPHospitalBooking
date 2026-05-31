@@ -155,6 +155,87 @@ namespace HospitalOPBooking.Controllers
             return RedirectToAction("Login");
         }
 
+        // ─── Change Password ─────────────────────────────────────────────────────
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ChangePassword([FromBody] ChangePasswordViewModel model)
+        {
+            try
+            {
+                // Check if user is logged in
+                var userEmail = HttpContext.Session.GetString("UserEmail");
+                var userRole = HttpContext.Session.GetString("UserRole");
+
+                if (string.IsNullOrEmpty(userEmail) || string.IsNullOrEmpty(userRole))
+                {
+                    return Json(new { success = false, message = "User not logged in." });
+                }
+
+                // Validate model
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList();
+                    return Json(new { success = false, message = string.Join(" ", errors) });
+                }
+
+                // Get current password hash based on user role
+                string? currentHash = null;
+                string tableName = userRole == "Patient" ? "Patients" : "Hospitals";
+                string emailColumn = "Email";
+
+                using (var conn = _db.GetConnection())
+                {
+                    conn.Open();
+                    var sql = $"SELECT PasswordHash FROM {tableName} WHERE {emailColumn} = @Email";
+                    using var cmd = new SqlCommand(sql, conn);
+                    cmd.Parameters.AddWithValue("@Email", userEmail);
+                    currentHash = cmd.ExecuteScalar() as string;
+                }
+
+                if (currentHash == null)
+                {
+                    return Json(new { success = false, message = "User not found." });
+                }
+
+                // Verify current password
+                if (!BCrypt.Net.BCrypt.Verify(model.CurrentPassword, currentHash))
+                {
+                    return Json(new { success = false, message = "Current password is incorrect." });
+                }
+
+                // Hash new password
+                var newHash = BCrypt.Net.BCrypt.HashPassword(model.NewPassword);
+
+                // Update password in database
+                using (var conn = _db.GetConnection())
+                {
+                    conn.Open();
+                    var sql = $"UPDATE {tableName} SET PasswordHash = @PasswordHash WHERE {emailColumn} = @Email";
+                    using var cmd = new SqlCommand(sql, conn);
+                    cmd.Parameters.AddWithValue("@PasswordHash", newHash);
+                    cmd.Parameters.AddWithValue("@Email", userEmail);
+                    int rowsAffected = cmd.ExecuteNonQuery();
+
+                    if (rowsAffected == 0)
+                    {
+                        return Json(new { success = false, message = "Failed to update password." });
+                    }
+                }
+
+                return Json(new { success = true, message = "Password changed successfully." });
+            }
+            catch (Exception ex)
+            {
+                // Log exception without exposing sensitive details
+                Console.WriteLine($"Error changing password: {ex.Message}");
+                return Json(new { success = false, message = "An error occurred while changing password. Please try again." });
+            }
+        }
+
         // ─── Helpers ─────────────────────────────────────────────────────────────
 
         private void SetSession(string email, string name, string role)
