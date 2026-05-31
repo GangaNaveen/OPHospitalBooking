@@ -1,3 +1,8 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   HOSPITAL OP BOOKING - SITE STYLES
+   Using Global Theme Variables from theme.css
+   ═══════════════════════════════════════════════════════════════════════ */
+
 /* ── Base ─────────────────────────────────────────────────────────────────── */
 html {
   font-size: 14px;
@@ -11,9 +16,9 @@ html {
 
 body {
   margin-bottom: 60px;
-  background: linear-gradient(135deg, #f0f4f8 0%, #e8f1f7 100%);
+  background: var(--bg-main);
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  color: #2c3e50;
+  color: var(--text-primary);
 }
 
 /* ── Auth Wrapper ─────────────────────────────────────────────────────────── */
@@ -26,9 +31,9 @@ body {
 }
 
 .auth-card {
-  background: #ffffff;
-  border-radius: 1.25rem;
-  box-shadow: 0 12px 50px rgba(0, 0, 0, 0.15);
+  background: var(--bg-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
   padding: 2.5rem 2rem;
   width: 100%;
   max-width: 520px;
@@ -45,7 +50,7 @@ body {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #0d6efd 0%, #0a58ca 100%);
+  background: linear-gradient(90deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
 }
 
 @keyframes slideUp {
@@ -84,18 +89,18 @@ body {
 .auth-icon {
   width: 72px;
   height: 72px;
-  background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+  background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 1rem;
-  box-shadow: 0 4px 16px rgba(13, 110, 253, 0.35);
+  box-shadow: var(--shadow-lg);
 }
 
 .auth-icon i {
   font-size: 2rem;
-  color: #fff;
+  color: var(--text-white);
 }
 
 .auth-title {
@@ -334,10 +339,10 @@ body {
 
 /* Welcome banner */
 .dash-banner {
-  background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
-  border-radius: 1rem;
+  background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+  border-radius: var(--radius-md);
   padding: 1.5rem 1.75rem;
-  box-shadow: 0 6px 24px rgba(13,110,253,.3);
+  box-shadow: var(--shadow-xl);
   position: relative;
   overflow: hidden;
 }
@@ -360,7 +365,7 @@ body {
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
-  font-size: 1.6rem; color: #fff;
+  font-size: 1.6rem; color: var(--text-white);
 }
 
 /* Section title */
@@ -513,7 +518,7 @@ body {
 .empty-state i { font-size: 3rem; display: block; margin-bottom: .75rem; }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   BOOK APPOINTMENT
+   BOOK APPOINTMENT - Using Theme Variables
 ══════════════════════════════════════════════════════════════════════════════ */
 
 .book-wrapper {
@@ -522,9 +527,9 @@ body {
 }
 
 .book-card {
-  background: #fff;
-  border-radius: 1.25rem;
-  box-shadow: 0 12px 50px rgba(0,0,0,.12);
+  background: var(--bg-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
   padding: 2rem 1.75rem;
   width: 100%; max-width: 560px;
   animation: slideUp .35s ease;
@@ -534,9 +539,12 @@ body {
 .book-header { margin-bottom: 1.5rem; }
 
 .back-link {
-  font-size: .85rem; color: #6c757d; text-decoration: none;
+  font-size: .85rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
 }
-.back-link:hover { color: #0d6efd; }
+.back-link:hover { color: var(--primary-color); }
 
 /* Doctor chips */
 .doctor-grid {
@@ -546,44 +554,54 @@ body {
 .doctor-chip {
   display: inline-flex; align-items: center;
   padding: .55rem 1.1rem;
-  border: 2px solid #dee2e6;
-  border-radius: 50px;
-  background: #fff;
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-pill);
+  background: var(--bg-white);
   font-size: .875rem;
   cursor: pointer;
-  transition: all .25s;
-  color: #495057;
-  box-shadow: 0 2px 6px rgba(0,0,0,.05);
+  transition: all var(--transition-normal);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
 }
 .doctor-chip:hover {
-  border-color: #0d6efd;
-  color: #0d6efd;
-  background: #f0f6ff;
-  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background: rgba(102, 126, 234, 0.05);
+  box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
 .doctor-chip.active {
-  border-color: #0d6efd;
-  background: linear-gradient(135deg, #0d6efd, #0a58ca);
-  color: #fff;
-  box-shadow: 0 4px 16px rgba(13, 110, 253, 0.35);
+  border-color: var(--primary-color);
+  background: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end));
+  color: var(--text-white);
+  box-shadow: var(--shadow-lg);
 }
 
 /* OP info panel */
 .op-info-panel {
-  background: #f0f6ff;
-  border: 1.5px solid #cfe2ff;
-  border-radius: .85rem;
+  background: rgba(102, 126, 234, 0.05);
+  border: 1.5px solid rgba(102, 126, 234, 0.2);
+  border-radius: var(--radius-md);
   padding: 1rem 1.25rem;
 }
 
 .op-stat { text-align: center; min-width: 80px; }
-.op-stat-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .5px; color: #6c757d; }
-.op-stat-value { font-size: 2rem; font-weight: 800; color: #0d6efd; line-height: 1.1; }
+.op-stat-label {
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--text-secondary);
+}
+.op-stat-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--primary-color);
+  line-height: 1.1;
+}
 .op-stat-note  { flex: 1; }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   BOOKING CONFIRM
+   BOOKING CONFIRM - Using Theme Variables
 ══════════════════════════════════════════════════════════════════════════════ */
 
 .confirm-wrapper {
@@ -592,9 +610,9 @@ body {
 }
 
 .confirm-card {
-  background: #fff;
-  border-radius: 1.25rem;
-  box-shadow: 0 12px 50px rgba(0,0,0,.12);
+  background: var(--bg-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
   padding: 2.5rem 2rem;
   width: 100%; max-width: 480px;
   text-align: center;
@@ -604,22 +622,32 @@ body {
 
 .confirm-icon {
   font-size: 4rem;
-  color: #198754;
+  color: var(--success-gradient-start);
   line-height: 1;
 }
 
 .token-highlight {
-  background: linear-gradient(135deg, #0d6efd, #0a58ca);
-  border-radius: 1rem;
+  background: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end));
+  border-radius: var(--radius-md);
   padding: 1.25rem;
-  color: #fff;
+  color: var(--text-white);
+  box-shadow: var(--shadow-lg);
 }
-.token-label  { font-size: .8rem; opacity: .85; text-transform: uppercase; letter-spacing: .5px; }
-.token-number { font-size: 3.5rem; font-weight: 900; line-height: 1; }
+.token-label  {
+  font-size: .8rem;
+  opacity: .85;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+.token-number {
+  font-size: 3.5rem;
+  font-weight: 900;
+  line-height: 1;
+}
 
 .confirm-details {
-  background: #f8f9fa;
-  border-radius: .85rem;
+  background: var(--bg-light);
+  border-radius: var(--radius-md);
   padding: 1rem 1.25rem;
   text-align: left;
 }
@@ -627,13 +655,22 @@ body {
 .confirm-row {
   display: flex; justify-content: space-between; align-items: flex-start;
   padding: .5rem 0;
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid var(--border-light);
   gap: .5rem;
 }
 .confirm-row:last-child { border-bottom: none; }
 
-.confirm-label { font-size: .85rem; color: #6c757d; white-space: nowrap; }
-.confirm-value { font-size: .9rem; font-weight: 600; color: #1a1a2e; text-align: right; }
+.confirm-label {
+  font-size: .85rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.confirm-value {
+  font-size: .9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: right;
+}
 
 /* ── Responsive ── */
 @media (max-width: 575.98px) {
@@ -649,17 +686,17 @@ body {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   HOSPITAL DASHBOARD
+   HOSPITAL DASHBOARD - Using Theme Variables
 ══════════════════════════════════════════════════════════════════════════════ */
 
 /* Stat cards */
 .stat-card {
-  border-radius: 1rem;
+  border-radius: var(--radius-md);
   padding: 1.25rem 1rem;
   text-align: center;
-  color: #fff;
-  box-shadow: 0 6px 20px rgba(0,0,0,.15);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  color: var(--text-white);
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
   position: relative;
   overflow: hidden;
 }
@@ -678,13 +715,13 @@ body {
 
 .stat-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 10px 30px rgba(0,0,0,.2);
+  box-shadow: var(--shadow-xl);
 }
 
-.stat-blue   { background: linear-gradient(135deg,#0d6efd,#0a58ca); }
-.stat-orange { background: linear-gradient(135deg,#fd7e14,#e8590c); }
-.stat-green  { background: linear-gradient(135deg,#198754,#146c43); }
-.stat-yellow { background: linear-gradient(135deg,#ffc107,#e0a800); color:#1a1a2e !important; }
+.stat-blue   { background: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end)); }
+.stat-orange { background: linear-gradient(135deg, #fd7e14, #e8590c); }
+.stat-green  { background: linear-gradient(135deg, var(--success-gradient-start), var(--success-gradient-end)); }
+.stat-yellow { background: linear-gradient(135deg, #ffc107, #e0a800); color: var(--text-primary) !important; }
 
 .stat-icon  { font-size: 1.6rem; opacity: .85; margin-bottom: .25rem; }
 .stat-value { font-size: 2rem; font-weight: 800; line-height: 1; }
@@ -692,23 +729,23 @@ body {
 
 /* Panel card */
 .panel-card {
-  background: #fff;
-  border-radius: 1rem;
-  box-shadow: 0 4px 16px rgba(0,0,0,.1);
+  background: var(--bg-white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
   overflow: hidden;
   border: 1px solid rgba(0,0,0,.05);
-  transition: box-shadow 0.3s ease;
+  transition: box-shadow var(--transition-normal);
 }
 
 .panel-card:hover {
-  box-shadow: 0 8px 24px rgba(0,0,0,.15);
+  box-shadow: var(--shadow-lg);
 }
 
 .panel-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 1rem 1.25rem;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-bottom: 2px solid #e9ecef;
+  background: linear-gradient(135deg, var(--bg-light) 0%, var(--border-light) 100%);
+  border-bottom: 2px solid var(--border-light);
   font-weight: 700; font-size: .95rem;
 }
 .panel-body { padding: 1.1rem 1.25rem; }
