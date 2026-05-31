@@ -1,186 +1,841 @@
 @model HospitalOPBooking.Models.HospitalDashboardViewModel
 @{
     ViewData["Title"] = "Hospital Dashboard";
+    
+    // Calculate additional metrics
+    var activeDoctors = Model.Doctors.Count(d => d.IsActive);
+    var totalRevenue = Model.TodayQueue.Sum(q => q.ConsultationFee);
+    var doctorGroups = Model.TodayQueue.GroupBy(q => q.DoctorName).ToList();
 }
 
-<!-- Welcome Banner -->
-<div class="dash-banner mb-4">
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
-        <div class="d-flex align-items-center gap-3">
-            <div class="dash-avatar"><i class="bi bi-building-fill-check"></i></div>
+<style>
+    /* Modern Hospital Dashboard Styles */
+    .dashboard-container {
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 1.5rem;
+    }
+
+    /* Welcome Banner */
+    .welcome-banner {
+        background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        color: white;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-xl);
+    }
+
+    .welcome-banner h2 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Summary Cards */
+    .summary-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.25rem;
+        margin-bottom: 2rem;
+    }
+
+    .summary-card {
+        background: white;
+        border-radius: var(--radius-md);
+        padding: 1.5rem;
+        box-shadow: var(--shadow-md);
+        transition: all var(--transition-normal);
+        border-left: 4px solid;
+    }
+
+    .summary-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .summary-card.card-primary { border-left-color: var(--primary-color); }
+    .summary-card.card-success { border-left-color: #28a745; }
+    .summary-card.card-warning { border-left-color: #ffc107; }
+    .summary-card.card-info { border-left-color: #17a2b8; }
+
+    .summary-card-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .card-primary .summary-card-icon {
+        background: rgba(102, 126, 234, 0.1);
+        color: var(--primary-color);
+    }
+
+    .card-success .summary-card-icon {
+        background: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+    }
+
+    .card-warning .summary-card-icon {
+        background: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+    }
+
+    .card-info .summary-card-icon {
+        background: rgba(23, 162, 184, 0.1);
+        color: #17a2b8;
+    }
+
+    .summary-card-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+
+    .summary-card-label {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        font-weight: 600;
+    }
+
+    /* Doctor Overview Cards */
+    .doctor-overview-section {
+        margin-bottom: 2rem;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .doctor-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.25rem;
+        margin-bottom: 2rem;
+    }
+
+    .doctor-overview-card {
+        background: white;
+        border-radius: var(--radius-md);
+        padding: 1.5rem;
+        box-shadow: var(--shadow-md);
+        transition: all var(--transition-normal);
+        border: 2px solid transparent;
+    }
+
+    .doctor-overview-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-lg);
+        border-color: var(--primary-color);
+    }
+
+    .doctor-overview-card.inactive {
+        opacity: 0.6;
+        background: #f8f9fa;
+    }
+
+    .doctor-card-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    .doctor-card-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .doctor-card-info h5 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+    }
+
+    .doctor-card-spec {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    .doctor-card-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .doctor-stat-item {
+        text-align: center;
+        padding: 0.75rem;
+        background: var(--bg-light);
+        border-radius: var(--radius-sm);
+    }
+
+    .doctor-stat-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+
+    .doctor-stat-label {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        margin-top: 0.25rem;
+    }
+
+    .doctor-card-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .doctor-card-actions .btn {
+        flex: 1;
+        min-width: 100px;
+        font-size: 0.85rem;
+        padding: 0.5rem 0.75rem;
+    }
+
+    /* Doctor-wise OP Tables */
+    .doctor-queue-section {
+        margin-bottom: 2rem;
+    }
+
+    .doctor-queue-accordion .accordion-item {
+        border: none;
+        margin-bottom: 1rem;
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        box-shadow: var(--shadow-md);
+    }
+
+    .doctor-queue-accordion .accordion-button {
+        background: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end));
+        color: white;
+        font-weight: 600;
+        padding: 1.25rem 1.5rem;
+    }
+
+    .doctor-queue-accordion .accordion-button:not(.collapsed) {
+        background: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end));
+        color: white;
+    }
+
+    .doctor-queue-accordion .accordion-button::after {
+        filter: brightness(0) invert(1);
+    }
+
+    .doctor-queue-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+    }
+
+    .doctor-queue-stats {
+        display: flex;
+        gap: 2rem;
+        font-size: 0.9rem;
+    }
+
+    .doctor-queue-stat {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Modern Table Styles */
+    .modern-table {
+        width: 100%;
+        background: white;
+    }
+
+    .modern-table thead {
+        background: var(--bg-light);
+    }
+
+    .modern-table th {
+        padding: 1rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid var(--border-light);
+    }
+
+    .modern-table td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-light);
+        vertical-align: middle;
+    }
+
+    .modern-table tbody tr:hover {
+        background: rgba(102, 126, 234, 0.05);
+    }
+
+    .modern-table tbody tr.row-done {
+        opacity: 0.6;
+        background: #f8f9fa;
+    }
+
+    .token-badge {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        border-radius: var(--radius-lg);
+        font-weight: 700;
+        font-size: 0.875rem;
+    }
+
+    .token-badge.active {
+        background: rgba(102, 126, 234, 0.1);
+        color: var(--primary-color);
+    }
+
+    .token-badge.done {
+        background: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+    }
+
+    .fee-amount {
+        font-weight: 600;
+        color: var(--primary-color);
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .dashboard-container {
+            padding: 1rem;
+        }
+
+        .summary-cards {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .doctor-cards-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .doctor-queue-stats {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+    }
+</style>
+
+<div class="dashboard-container">
+    <!-- Welcome Banner -->
+    <div class="welcome-banner">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
             <div>
-                <h3 class="mb-0 fw-bold text-white">
-                    <i class="bi bi-hospital-fill me-2"></i>@Model.HospitalName
-                </h3>
-                <p class="mb-0 text-white opacity-85 small"><i class="bi bi-graph-up me-1"></i>Hospital Dashboard</p>
+                <h2><i class="bi bi-hospital-fill me-2"></i>@Model.HospitalName</h2>
+                <p class="mb-0" style="opacity: 0.9;">
+                    <i class="bi bi-calendar3 me-1"></i>@DateTime.Today.ToString("dddd, dd MMMM yyyy")
+                </p>
             </div>
+            <a asp-controller="Hospital" asp-action="BookForPatient"
+               class="btn btn-light btn-lg fw-semibold">
+                <i class="bi bi-calendar-plus me-2"></i>Book for Patient
+            </a>
         </div>
-        <a asp-controller="Hospital" asp-action="BookForPatient"
-           class="btn btn-light btn-sm fw-semibold" style="box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
-            <i class="bi bi-calendar-plus me-1"></i>Book for Patient
-        </a>
     </div>
-</div>
 
-@if (TempData["BookSuccess"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="bi bi-check-circle-fill me-2"></i><strong>Success!</strong> @TempData["BookSuccess"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-}
-@if (TempData["DoctorSuccess"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="bi bi-check-circle-fill me-2"></i><strong>Success!</strong> @TempData["DoctorSuccess"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-}
-@if (TempData["DoctorError"] != null)
-{
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i><strong>Error!</strong> @TempData["DoctorError"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-}
+    <!-- Success/Error Messages -->
+    @if (TempData["BookSuccess"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i><strong>Success!</strong> @TempData["BookSuccess"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["DoctorSuccess"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i><strong>Success!</strong> @TempData["DoctorSuccess"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["DoctorError"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i><strong>Error!</strong> @TempData["DoctorError"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
 
-<!-- ── Stats Row ── -->
-<div class="row g-4 mb-5">
-    <div class="col-sm-6 col-lg-3">
-        <div class="stat-card stat-blue">
-            <div class="stat-icon"><i class="bi bi-calendar2-check"></i></div>
-            <div class="stat-value">@Model.TotalBookings</div>
-            <div class="stat-label">Total Bookings</div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-lg-3">
-        <div class="stat-card stat-orange">
-            <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
-            <div class="stat-value">@Model.TodayTotal</div>
-            <div class="stat-label">Today's OPs</div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-lg-3">
-        <div class="stat-card stat-green">
-            <div class="stat-icon"><i class="bi bi-check-circle-fill"></i></div>
-            <div class="stat-value">@Model.TodayDone</div>
-            <div class="stat-label">Done Today</div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-lg-3">
-        <div class="stat-card stat-yellow">
-            <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
-            <div class="stat-value">@Model.TodayPending</div>
-            <div class="stat-label">Pending</div>
-        </div>
-    </div>
-</div>
-
-<div class="row g-4">
-
-    <!-- ── LEFT: Doctors Panel ── -->
-    <div class="col-lg-4">
-        <div class="panel-card h-100">
-            <div class="panel-header">
-                <span><i class="bi bi-person-badge me-2"></i>Doctors</span>
-                <span class="badge bg-primary">@Model.Doctors.Count</span>
+    <!-- Summary Cards -->
+    <div class="summary-cards">
+        <div class="summary-card card-primary">
+            <div class="summary-card-icon">
+                <i class="bi bi-person-badge"></i>
             </div>
-            <div class="panel-body">
+            <div class="summary-card-value">@Model.Doctors.Count</div>
+            <div class="summary-card-label">Total Doctors</div>
+        </div>
 
-                <!-- Add Doctor Form -->
-                <form asp-action="AddDoctor" asp-controller="Hospital" method="post" class="mb-3">
-                    @Html.AntiForgeryToken()
-                    <div class="mb-2">
-                        <input type="text" name="Name" class="form-control"
-                               placeholder="Doctor name *" required maxlength="100" />
-                    </div>
-                    <div class="mb-2">
-                        <input type="text" name="Specialization" class="form-control"
-                               placeholder="Specialization (e.g. Cardiologist)" maxlength="150" />
-                    </div>
-                    <div class="mb-2">
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text">₹</span>
-                            <input type="number" name="NewPatientFee" class="form-control"
-                                   placeholder="New patient fee" min="0" step="0.01" value="0" />
-                        </div>
-                        <div class="form-text ps-1">
-                            <i class="bi bi-person-plus-fill text-primary me-1"></i>New Patient Fee
-                            <span class="text-muted">(Revisit rules configured per doctor below)</span>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-plus-lg me-1"></i>Add Doctor
-                    </button>
-                </form>
+        <div class="summary-card card-success">
+            <div class="summary-card-icon">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <div class="summary-card-value">@activeDoctors</div>
+            <div class="summary-card-label">Active Doctors</div>
+        </div>
 
-                <!-- Doctor List -->
-                @if (!Model.Doctors.Any())
+        <div class="summary-card card-warning">
+            <div class="summary-card-icon">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <div class="summary-card-value">@Model.TodayTotal</div>
+            <div class="summary-card-label">Today's Appointments</div>
+        </div>
+
+        <div class="summary-card card-info">
+            <div class="summary-card-icon">
+                <i class="bi bi-currency-rupee"></i>
+            </div>
+            <div class="summary-card-value">₹@totalRevenue.ToString("N0")</div>
+            <div class="summary-card-label">Today's Revenue</div>
+        </div>
+
+        <div class="summary-card card-success">
+            <div class="summary-card-icon">
+                <i class="bi bi-check2-circle"></i>
+            </div>
+            <div class="summary-card-value">@Model.TodayDone</div>
+            <div class="summary-card-label">Completed</div>
+        </div>
+
+        <div class="summary-card card-warning">
+            <div class="summary-card-icon">
+                <i class="bi bi-clock-history"></i>
+            </div>
+            <div class="summary-card-value">@Model.TodayPending</div>
+            <div class="summary-card-label">Pending</div>
+        </div>
+    </div>
+
+    <!-- Doctor Overview Cards -->
+    <div class="doctor-overview-section">
+        <div class="section-header">
+            <h4 class="section-title">
+                <i class="bi bi-person-badge me-2"></i>Doctor Overview
+            </h4>
+            <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#manageDoctorsModal">
+                <i class="bi bi-gear me-1"></i>Manage Doctors
+            </button>
+        </div>
+
+        @if (!Model.Doctors.Any())
+        {
+            <div class="text-center py-5">
+                <i class="bi bi-person-x" style="font-size: 3rem; opacity: 0.3;"></i>
+                <p class="text-muted mt-3">No doctors added yet. Click "Manage Doctors" to add doctors.</p>
+            </div>
+        }
+        else
+        {
+            <div class="doctor-cards-grid">
+                @foreach (var doctor in Model.Doctors)
                 {
-                    <p class="text-muted small text-center py-3">No doctors added yet.</p>
+                    var doctorQueue = Model.TodayQueue.Where(q => q.DoctorName == doctor.Name).ToList();
+                    var doctorRevenue = doctorQueue.Sum(q => q.ConsultationFee);
+                    var initials = string.Join("", doctor.Name.Split(' ').Select(n => n.FirstOrDefault()));
+
+                    <div class="doctor-overview-card @(!doctor.IsActive ? "inactive" : "")">
+                        <div class="doctor-card-header">
+                            <div class="doctor-card-avatar">@initials</div>
+                            <div class="doctor-card-info">
+                                <h5>Dr. @doctor.Name</h5>
+                                @if (!string.IsNullOrEmpty(doctor.Specialization))
+                                {
+                                    <div class="doctor-card-spec">@doctor.Specialization</div>
+                                }
+                                @if (!doctor.IsActive)
+                                {
+                                    <span class="badge bg-secondary mt-1">Inactive</span>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="doctor-card-stats">
+                            <div class="doctor-stat-item">
+                                <div class="doctor-stat-value">@doctorQueue.Count</div>
+                                <div class="doctor-stat-label">Today's OPs</div>
+                            </div>
+                            <div class="doctor-stat-item">
+                                <div class="doctor-stat-value">₹@doctorRevenue.ToString("N0")</div>
+                                <div class="doctor-stat-label">Revenue</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-2 small">
+                            <i class="bi bi-currency-rupee text-primary me-1"></i>
+                            <strong>Fee:</strong> ₹@doctor.NewPatientFee.ToString("N0")
+                        </div>
+
+                        <div class="doctor-card-actions">
+                            <a asp-controller="Schedule" asp-action="Doctor" asp-route-doctorId="@doctor.Id"
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-calendar-week me-1"></i>Schedule
+                            </a>
+                            <button type="button" class="btn btn-sm btn-outline-success"
+                                    onclick="openFeeRules(@doctor.Id, '@doctor.Name.Replace("'", "\\'")', @doctor.NewPatientFee)">
+                                <i class="bi bi-currency-rupee me-1"></i>Fees
+                            </button>
+                        </div>
+                    </div>
                 }
-                else
+            </div>
+        }
+    </div>
+
+    <!-- Doctor-wise Today's OP Tables -->
+    @if (doctorGroups.Any())
+    {
+        <div class="doctor-queue-section">
+            <div class="section-header">
+                <h4 class="section-title">
+                    <i class="bi bi-list-columns me-2"></i>Doctor-wise Today's Queue
+                </h4>
+            </div>
+
+            <div class="accordion doctor-queue-accordion" id="doctorQueueAccordion">
+                @for (int i = 0; i < doctorGroups.Count; i++)
                 {
-                    <ul class="doctor-list" id="doctorList">
-                        @foreach (var d in Model.Doctors)
-                        {
-                            <li class="doctor-item @(!d.IsActive ? "doctor-inactive" : "")"
-                                id="doc-@d.Id">
-                                <div class="doctor-item-name" id="docName-@d.Id">
-                                    <i class="bi bi-person-circle me-1 text-primary"></i>
+                    var group = doctorGroups[i];
+                    var groupRevenue = group.Sum(q => q.ConsultationFee);
+                    var groupDone = group.Count(q => q.IsDone);
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading@(i)">
+                            <button class="accordion-button @(i > 0 ? "collapsed" : "")" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#collapse@(i)"
+                                    aria-expanded="@(i == 0 ? "true" : "false")" aria-controls="collapse@(i)">
+                                <div class="doctor-queue-header">
                                     <div>
-                                        <span id="docNameText-@d.Id" class="fw-semibold">@d.Name</span>
-                                        @if (!string.IsNullOrWhiteSpace(d.Specialization))
+                                        <i class="bi bi-person-badge me-2"></i>
+                                        <strong>Dr. @group.Key</strong>
+                                    </div>
+                                    <div class="doctor-queue-stats">
+                                        <div class="doctor-queue-stat">
+                                            <i class="bi bi-people-fill"></i>
+                                            <span>@group.Count() OPs</span>
+                                        </div>
+                                        <div class="doctor-queue-stat">
+                                            <i class="bi bi-check-circle-fill"></i>
+                                            <span>@groupDone Done</span>
+                                        </div>
+                                        <div class="doctor-queue-stat">
+                                            <i class="bi bi-currency-rupee"></i>
+                                            <span>₹@groupRevenue.ToString("N0")</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </button>
+                        </h2>
+                        <div id="collapse@(i)" class="accordion-collapse collapse @(i == 0 ? "show" : "")"
+                             aria-labelledby="heading@(i)" data-bs-parent="#doctorQueueAccordion">
+                            <div class="accordion-body p-0">
+                                <div class="table-responsive">
+                                    <table class="modern-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Token</th>
+                                                <th>Patient</th>
+                                                <th>Mobile</th>
+                                                <th>Fee</th>
+                                                <th>Source</th>
+                                                <th>Status</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var q in group.OrderBy(x => x.TokenNumber))
+                                            {
+                                                <tr id="row-@q.BookingId" class="@(q.IsDone ? "row-done" : "")">
+                                                    <td>
+                                                        <span class="token-badge @(q.IsDone ? "done" : "active")">
+                                                            #@q.TokenNumber
+                                                        </span>
+                                                    </td>
+                                                    <td class="fw-semibold">@q.PatientName</td>
+                                                    <td class="text-muted small">@q.PatientMobile</td>
+                                                    <td>
+                                                        <span class="fee-amount">₹@q.ConsultationFee.ToString("N0")</span>
+                                                        @if (!string.IsNullOrEmpty(q.FeeCategory))
+                                                        {
+                                                            <br />
+                                                            <small class="text-muted">@q.FeeCategory</small>
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        @if (q.BookedByHospital)
+                                                        {
+                                                            <span class="badge bg-info">Hospital</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="badge bg-light text-muted border">Patient</span>
+                                                        }
+                                                    </td>
+                                                    <td id="status-@q.BookingId">
+                                                        @if (q.IsDone)
+                                                        {
+                                                            <span class="badge bg-success">Done</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="badge bg-warning text-dark">Pending</span>
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        @if (!q.IsDone)
+                                                        {
+                                                            <form class="mark-done-form" data-id="@q.BookingId">
+                                                                @Html.AntiForgeryToken()
+                                                                <button type="submit" class="btn btn-success btn-sm">
+                                                                    <i class="bi bi-check2 me-1"></i>Done
+                                                                </button>
+                                                            </form>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- Complete Today's OP Queue -->
+    @if (Model.TodayQueue.Any())
+    {
+        <div class="doctor-queue-section">
+            <div class="section-header">
+                <h4 class="section-title">
+                    <i class="bi bi-list-ul me-2"></i>Complete Today's Queue
+                </h4>
+                <span class="badge bg-primary" style="font-size: 1rem; padding: 0.5rem 1rem;">
+                    @Model.TodayQueue.Count Appointments
+                </span>
+            </div>
+
+            <div style="background: white; border-radius: var(--radius-md); box-shadow: var(--shadow-md); overflow: hidden;">
+                <div class="table-responsive">
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th>Token</th>
+                                <th>Patient</th>
+                                <th>Mobile</th>
+                                <th>Doctor</th>
+                                <th>Fee</th>
+                                <th>Source</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="queueBody">
+                            @foreach (var q in Model.TodayQueue)
+                            {
+                                <tr id="row-@q.BookingId" class="@(q.IsDone ? "row-done" : "")">
+                                    <td>
+                                        <span class="token-badge @(q.IsDone ? "done" : "active")">
+                                            #@q.TokenNumber
+                                        </span>
+                                    </td>
+                                    <td class="fw-semibold">@q.PatientName</td>
+                                    <td class="text-muted small">@q.PatientMobile</td>
+                                    <td class="small">Dr. @q.DoctorName</td>
+                                    <td>
+                                        <span class="fee-amount">₹@q.ConsultationFee.ToString("N0")</span>
+                                        @if (!string.IsNullOrEmpty(q.FeeCategory))
                                         {
                                             <br />
-                                            <span id="docSpecText-@d.Id" class="doc-spec-badge">
-                                                @d.Specialization
-                                            </span>
+                                            <small class="text-muted">@q.FeeCategory</small>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (q.BookedByHospital)
+                                        {
+                                            <span class="badge bg-info">Hospital</span>
                                         }
                                         else
                                         {
-                                            <br />
-                                            <span id="docSpecText-@d.Id" class="doc-spec-badge d-none"></span>
+                                            <span class="badge bg-light text-muted border">Patient</span>
+                                        }
+                                    </td>
+                                    <td id="status-@q.BookingId">
+                                        @if (q.IsDone)
+                                        {
+                                            <span class="badge bg-success">Done</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">Pending</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!q.IsDone)
+                                        {
+                                            <form class="mark-done-form" data-id="@q.BookingId">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-success btn-sm">
+                                                    <i class="bi bi-check2 me-1"></i>Done
+                                                </button>
+                                            </form>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-calendar-x" style="font-size: 3rem; opacity: 0.3;"></i>
+            <p class="text-muted mt-3">No appointments for today.</p>
+        </div>
+    }
+</div>
+
+<!-- Made with Bob -->
+
+
+<!-- Manage Doctors Modal -->
+<div class="modal fade" id="manageDoctorsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-person-badge me-2"></i>Manage Doctors
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Add Doctor Form -->
+                <div class="mb-4 p-3" style="background: var(--bg-light); border-radius: var(--radius-md);">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-plus-circle me-2"></i>Add New Doctor</h6>
+                    <form asp-action="AddDoctor" asp-controller="Hospital" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <input type="text" name="Name" class="form-control"
+                                       placeholder="Doctor name *" required maxlength="100" />
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" name="Specialization" class="form-control"
+                                       placeholder="Specialization" maxlength="150" />
+                            </div>
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text">₹</span>
+                                    <input type="number" name="NewPatientFee" class="form-control"
+                                           placeholder="New patient fee" min="0" step="0.01" value="0" />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-plus-lg me-1"></i>Add Doctor
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Doctor List -->
+                <h6 class="fw-bold mb-3"><i class="bi bi-list-ul me-2"></i>All Doctors</h6>
+                @if (!Model.Doctors.Any())
+                {
+                    <p class="text-muted text-center py-3">No doctors added yet.</p>
+                }
+                else
+                {
+                    <ul class="list-group">
+                        @foreach (var d in Model.Doctors)
+                        {
+                            <li class="list-group-item @(!d.IsActive ? "list-group-item-secondary" : "")"
+                                id="doc-@d.Id">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="fw-semibold" id="docNameText-@d.Id">
+                                            <i class="bi bi-person-circle me-1 text-primary"></i>
+                                            @d.Name
+                                        </div>
+                                        @if (!string.IsNullOrWhiteSpace(d.Specialization))
+                                        {
+                                            <small class="text-muted" id="docSpecText-@d.Id">@d.Specialization</small>
                                         }
                                         <br />
-                                        <span class="doc-fee-text" id="docFeeText-@d.Id">
-                                            <i class="bi bi-person-plus-fill text-primary me-1"></i>
-                                            New: <strong id="docNewFee-@d.Id">₹@d.NewPatientFee.ToString("0.##")</strong>
-                                            &nbsp;
-                                            <span id="docRulesSummary-@d.Id" class="text-muted small"></span>
-                                        </span>
+                                        <small>
+                                            <i class="bi bi-currency-rupee text-success me-1"></i>
+                                            <strong id="docNewFee-@d.Id">₹@d.NewPatientFee.ToString("0.##")</strong>
+                                            <span id="docRulesSummary-@d.Id" class="text-muted"></span>
+                                        </small>
                                     </div>
-                                </div>
-                                <div class="doctor-item-actions">
-                                    <!-- Fee Rules -->
-                                    <button type="button" class="btn-icon text-success"
-                                            title="Configure Fee Rules"
-                                            onclick="openFeeRules(@d.Id, '@d.Name.Replace("'","\\'")', @d.NewPatientFee)">
-                                        <i class="bi bi-currency-rupee"></i>
-                                    </button>
-                                    <!-- Schedule -->
-                                    <a asp-controller="Schedule" asp-action="Doctor"
-                                       asp-route-doctorId="@d.Id"
-                                       class="btn-icon text-info" title="Set Schedule">
-                                        <i class="bi bi-calendar-week-fill"></i>
-                                    </a>
-                                    <!-- Edit -->
-                                    <button type="button" class="btn-icon text-primary"
-                                            title="Edit"
-                                            onclick="startEdit(@d.Id, '@d.Name.Replace("'","\\'")', '@d.Specialization.Replace("'","\\'")', @d.NewPatientFee)">
-                                        <i class="bi bi-pencil-fill"></i>
-                                    </button>
-                                    <!-- Toggle Active -->
-                                    <form asp-action="ToggleDoctor" asp-controller="Hospital"
-                                          method="post" class="d-inline toggle-form" data-docid="@d.Id">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="doctorId" value="@d.Id" />
-                                        <button type="submit"
-                                                class="btn-icon @(d.IsActive ? "text-warning" : "text-success")"
-                                                title="@(d.IsActive ? "Set Inactive" : "Set Active")">
-                                            <i class="bi @(d.IsActive ? "bi-toggle-on" : "bi-toggle-off")"></i>
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-sm btn-outline-success"
+                                                title="Configure Fee Rules"
+                                                onclick="openFeeRules(@d.Id, '@d.Name.Replace("'","\\'")', @d.NewPatientFee)">
+                                            <i class="bi bi-currency-rupee"></i>
                                         </button>
-                                    </form>
+                                        <a asp-controller="Schedule" asp-action="Doctor"
+                                           asp-route-doctorId="@d.Id"
+                                           class="btn btn-sm btn-outline-info" title="Set Schedule">
+                                            <i class="bi bi-calendar-week-fill"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                                title="Edit"
+                                                onclick="startEdit(@d.Id, '@d.Name.Replace("'","\\'")', '@d.Specialization.Replace("'","\\'")', @d.NewPatientFee)">
+                                            <i class="bi bi-pencil-fill"></i>
+                                        </button>
+                                        <form asp-action="ToggleDoctor" asp-controller="Hospital"
+                                              method="post" class="d-inline toggle-form" data-docid="@d.Id">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="doctorId" value="@d.Id" />
+                                            <button type="submit"
+                                                    class="btn btn-sm @(d.IsActive ? "btn-outline-warning" : "btn-outline-success")"
+                                                    title="@(d.IsActive ? "Set Inactive" : "Set Active")">
+                                                <i class="bi @(d.IsActive ? "bi-toggle-on" : "bi-toggle-off")"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
                             </li>
                         }
@@ -189,91 +844,6 @@
             </div>
         </div>
     </div>
-
-    <!-- ── RIGHT: Today's OP Queue ── -->
-    <div class="col-lg-8">
-        <div class="panel-card">
-            <div class="panel-header">
-                <span><i class="bi bi-list-ol me-2"></i>Today's OP Queue</span>
-                <span class="text-muted small">@DateTime.Today.ToString("dd MMM yyyy")</span>
-            </div>
-            <div class="panel-body p-0">
-                @if (!Model.TodayQueue.Any())
-                {
-                    <div class="empty-state py-4">
-                        <i class="bi bi-calendar-x"></i>
-                        <p>No bookings for today.</p>
-                    </div>
-                }
-                else
-                {
-                    <div class="table-responsive">
-                        <table class="table table-hover queue-table mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Token</th>
-                                    <th>Patient</th>
-                                    <th>Mobile</th>
-                                    <th>Doctor</th>
-                                    <th>Source</th>
-                                    <th>Status</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody id="queueBody">
-                                @foreach (var q in Model.TodayQueue)
-                                {
-                                    <tr id="row-@q.BookingId"
-                                        class="@(q.IsDone ? "row-done" : "")">
-                                        <td>
-                                            <span class="token-pill @(q.IsDone ? "token-done" : "token-active")">
-                                                #@q.TokenNumber
-                                            </span>
-                                        </td>
-                                        <td class="fw-semibold">@q.PatientName</td>
-                                        <td class="text-muted small">@q.PatientMobile</td>
-                                        <td class="small">Dr. @q.DoctorName</td>
-                                        <td>
-                                            @if (q.BookedByHospital)
-                                            {
-                                                <span class="badge bg-info text-dark">Hospital</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-light text-muted border">Patient</span>
-                                            }
-                                        </td>
-                                        <td id="status-@q.BookingId">
-                                            @if (q.IsDone)
-                                            {
-                                                <span class="badge bg-success">Done</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-warning text-dark">Pending</span>
-                                            }
-                                        </td>
-                                        <td>
-                                            @if (!q.IsDone)
-                                            {
-                                                <form class="mark-done-form" data-id="@q.BookingId">
-                                                    @Html.AntiForgeryToken()
-                                                    <button type="submit" class="btn btn-success btn-sm">
-                                                        <i class="bi bi-check2 me-1"></i>Done
-                                                    </button>
-                                                </form>
-                                            }
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-            </div>
-        </div>
-    </div>
-
 </div>
 
 <!-- Edit Doctor Modal -->
@@ -317,7 +887,7 @@
     </div>
 </div>
 
-<!-- ── Fee Rules Modal ── -->
+<!-- Fee Rules Modal -->
 <div class="modal fade" id="feeRulesModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
@@ -334,7 +904,6 @@
                 <button type="button" class="btn-close ms-3" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-
                 <!-- New Patient Fee (read-only reminder) -->
                 <div class="fee-rules-base-fee mb-3">
                     <div class="d-flex align-items-center gap-3">
@@ -442,6 +1011,7 @@
                 const feeEl = document.getElementById(`docNewFee-${editingDoctorId}`);
                 if (feeEl) feeEl.textContent = '₹' + (data.newFee || 0).toFixed(2).replace(/\.00$/, '');
                 bootstrap.Modal.getInstance(document.getElementById('editDoctorModal')).hide();
+                location.reload(); // Reload to update doctor cards
             } else {
                 document.getElementById('editDoctorError').textContent = data.msg;
                 document.getElementById('editDoctorError').classList.remove('d-none');
@@ -612,20 +1182,7 @@
             .then(r => r.json())
             .then(data => {
                 if (!data.ok) return;
-                const row  = document.getElementById(`doc-${docId}`);
-                const btn  = this.querySelector('button');
-                const icon = btn.querySelector('i');
-                if (data.isActive) {
-                    row.classList.remove('doctor-inactive');
-                    btn.classList.replace('text-success', 'text-warning');
-                    btn.title = 'Set Inactive';
-                    icon.classList.replace('bi-toggle-off', 'bi-toggle-on');
-                } else {
-                    row.classList.add('doctor-inactive');
-                    btn.classList.replace('text-warning', 'text-success');
-                    btn.title = 'Set Active';
-                    icon.classList.replace('bi-toggle-on', 'bi-toggle-off');
-                }
+                location.reload(); // Reload to update doctor cards and stats
             });
         });
     });
@@ -644,14 +1201,25 @@
             .then(r => r.json())
             .then(data => {
                 if (!data.ok) return;
-                const row = document.getElementById(`row-${id}`);
-                row.classList.add('row-done');
-                document.getElementById(`status-${id}`).innerHTML = '<span class="badge bg-success">Done</span>';
+                // Update all instances of this row (in both doctor-wise and complete tables)
+                document.querySelectorAll(`#row-${id}`).forEach(row => {
+                    row.classList.add('row-done');
+                    const tokenBadge = row.querySelector('.token-badge');
+                    if (tokenBadge) {
+                        tokenBadge.classList.remove('active');
+                        tokenBadge.classList.add('done');
+                    }
+                });
+                document.querySelectorAll(`#status-${id}`).forEach(statusEl => {
+                    statusEl.innerHTML = '<span class="badge bg-success">Done</span>';
+                });
                 this.remove();
-                const doneEl    = document.querySelector('.stat-green .stat-value');
-                const pendingEl = document.querySelector('.stat-yellow .stat-value');
-                if (doneEl)    doneEl.textContent    = parseInt(doneEl.textContent)    + 1;
-                if (pendingEl) pendingEl.textContent = parseInt(pendingEl.textContent) - 1;
+                
+                // Update summary cards
+                const completedCard = document.querySelector('.card-success:nth-of-type(2) .summary-card-value');
+                const pendingCard = document.querySelector('.card-warning:nth-of-type(2) .summary-card-value');
+                if (completedCard) completedCard.textContent = parseInt(completedCard.textContent) + 1;
+                if (pendingCard) pendingCard.textContent = parseInt(pendingCard.textContent) - 1;
             });
         });
     });

@@ -1088,30 +1088,33 @@ namespace HospitalOPBooking.Controllers
                     });
             }
 
-                        var queue = new List<OPQueueItem>();
-                        using (var cmd = new SqlCommand(
-                                @"SELECT b.Id, b.TokenNumber, p.Name, p.MobileNo, b.DoctorName,
-                                                 b.Status, b.BookedByHospital, b.BookingForName
-                                    FROM OPBookings b
-                                    JOIN Patients p ON p.Id = b.PatientId
-                                    WHERE b.HospitalId=@Id
-                                        AND CAST(b.BookingDate AS DATE)=CAST(GETDATE() AS DATE)
-                                    ORDER BY b.TokenNumber", conn))
+            var queue = new List<OPQueueItem>();
+            using (var cmd = new SqlCommand(
+                @"SELECT b.Id, b.TokenNumber, p.Name, p.MobileNo, b.DoctorName,
+                         b.Status, b.BookedByHospital, b.BookingForName,
+                         ISNULL(b.ConsultationFee, 0), ISNULL(b.FeeCategory, '')
+                  FROM OPBookings b
+                  JOIN Patients p ON p.Id = b.PatientId
+                  WHERE b.HospitalId=@Id
+                    AND CAST(b.BookingDate AS DATE)=CAST(GETDATE() AS DATE)
+                  ORDER BY b.TokenNumber", conn))
             {
                 cmd.Parameters.AddWithValue("@Id", hospitalId);
                 using var r = cmd.ExecuteReader();
                 while (r.Read())
                     queue.Add(new OPQueueItem
                     {
-                                                BookingId        = r.GetInt32(0),
-                                                TokenNumber      = r.GetInt32(1),
-                                                // Use BookingForName if present, otherwise fall back to patient account name
-                                                PatientName      = (r.IsDBNull(7) || string.IsNullOrWhiteSpace(r.GetString(7))) ? r.GetString(2) : r.GetString(7),
-                                                PatientMobile    = r.GetString(3),
-                                                DoctorName       = r.GetString(4),
-                                                Status           = r.GetString(5),
-                                                BookedByHospital = r.GetBoolean(6),
-                                                BookingForName   = r.IsDBNull(7) ? string.Empty : r.GetString(7)
+                        BookingId        = r.GetInt32(0),
+                        TokenNumber      = r.GetInt32(1),
+                        // Use BookingForName if present, otherwise fall back to patient account name
+                        PatientName      = (r.IsDBNull(7) || string.IsNullOrWhiteSpace(r.GetString(7))) ? r.GetString(2) : r.GetString(7),
+                        PatientMobile    = r.GetString(3),
+                        DoctorName       = r.GetString(4),
+                        Status           = r.GetString(5),
+                        BookedByHospital = r.GetBoolean(6),
+                        BookingForName   = r.IsDBNull(7) ? string.Empty : r.GetString(7),
+                        ConsultationFee  = r.GetDecimal(8),
+                        FeeCategory      = r.GetString(9)
                     });
             }
 
