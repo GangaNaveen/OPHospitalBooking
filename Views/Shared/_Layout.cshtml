@@ -19,15 +19,16 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/HospitalOPBooking.styles.css" asp-append-version="true" />
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-md navbar-dark bg-primary shadow-sm">
+        <nav class="navbar navbar-expand-md navbar-dark shadow-sm" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
             <div class="container">
                 <a class="navbar-brand fw-bold d-flex align-items-center gap-2" asp-controller="Home" asp-action="Index">
-                    <img src="~/images/logo.png" alt="Logo" class="navbar-logo" />
+                    <img src="~/images/logo.png" alt="Logo" class="navbar-logo" style="height: 40px; filter: brightness(0) invert(1);" />
                     <span>Hospital OP Booking</span>
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
@@ -68,7 +69,7 @@
                     <ul class="navbar-nav ms-auto mb-2 mb-md-0 align-items-md-center">
                         <!-- Install App Button -->
                         <li class="nav-item me-2" id="installAppBtn" style="display: none;">
-                            <button class="btn btn-sm btn-light">
+                            <button class="btn btn-sm" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 50px; padding: 0.4rem 1rem;">
                                 <i class="bi bi-cloud-download me-1"></i>Install App
                             </button>
                         </li>
@@ -78,16 +79,16 @@
                             var userName = Context.Session.GetString("UserName") ?? "User";
                             var userRole = Context.Session.GetString("UserRole") ?? "";
                             <li class="nav-item me-2">
-                                <span class="navbar-text text-white-50 small">
+                                <span class="navbar-text" style="color: rgba(255,255,255,0.8);">
                                     <i class="bi bi-person-circle me-1"></i>
                                     <strong class="text-white">@userName</strong>
-                                    <span class="badge bg-light text-primary ms-1">@userRole</span>
+                                    <span class="badge ms-1" style="background: rgba(255,255,255,0.2); color: white;">@userRole</span>
                                 </span>
                             </li>
                             <li class="nav-item">
                                 <form asp-action="Logout" asp-controller="Account" method="post" class="d-inline">
                                     @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-outline-light btn-sm">
+                                    <button type="submit" class="btn btn-sm" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 50px; padding: 0.4rem 1rem;">
                                         <i class="bi bi-box-arrow-right me-1"></i>Logout
                                     </button>
                                 </form>
@@ -101,7 +102,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="btn btn-outline-light btn-sm" asp-controller="Account" asp-action="RegisterPatient">
+                                <a class="btn btn-sm" asp-controller="Account" asp-action="RegisterPatient" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 50px; padding: 0.4rem 1rem;">
                                     <i class="bi bi-person-plus me-1"></i>Register
                                 </a>
                             </li>
@@ -118,9 +119,11 @@
         </main>
     </div>
 
-    <footer class="footer bg-light border-top py-3 mt-auto">
-        <div class="container text-center text-muted small">
-            &copy; @DateTime.Now.Year Hospital OP Booking System. All rights reserved.
+    <footer class="footer border-top py-3 mt-auto" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+        <div class="container text-center small">
+            <div style="opacity: 0.9;">
+                &copy; @DateTime.Now.Year Hospital OP Booking System. All rights reserved.
+            </div>
         </div>
     </footer>
 

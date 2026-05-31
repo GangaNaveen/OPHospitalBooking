@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "xdE0qP0uBTDT0Vc2dP3DqSsk7tWx8CqGyCvFnAm0NcA=",
+  "Hash": "spDl3zzRHvSW2FOn/7ANUzcUbel8rQW7H28IepdCbv0=",
   "Source": "HospitalOPBooking",
   "BasePath": "_content/HospitalOPBooking",
   "Mode": "Default",
@@ -66,6 +66,23 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\css\\site.css"
+    },
+    {
+      "Identity": "D:\\Git_OpBooking\\wwwroot\\css\\theme.css",
+      "SourceId": "HospitalOPBooking",
+      "SourceType": "Discovered",
+      "ContentRoot": "D:\\Git_OpBooking\\wwwroot\\",
+      "BasePath": "_content/HospitalOPBooking",
+      "RelativePath": "css/theme.css",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\css\\theme.css"
     },
     {
       "Identity": "D:\\Git_OpBooking\\wwwroot\\favicon.ico",
