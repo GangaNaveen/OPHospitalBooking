@@ -11,5 +11,7 @@ namespace HospitalOPBooking.Models
         public bool   PreviouslyBooked { get; set; }
         /// <summary>Total OP bookings for today across all doctors in this hospital.</summary>
         public int    TodayBookingCount { get; set; }
+        /// <summary>New Patient consultation fee from Doctors table.</summary>
+        public decimal NewPatientFee { get; set; }
     }
 }

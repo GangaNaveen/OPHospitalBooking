@@ -1,179 +1,721 @@
 @model HospitalOPBooking.Models.PatientDashboardViewModel
 @{
-    ViewData["Title"] = "Patient Dashboard";
+    ViewData["Title"] = "Book Appointment";
 }
 
-<!-- Welcome Banner -->
-<div class="dash-banner mb-4">
-    <div class="d-flex align-items-center gap-3 flex-wrap">
-        <div class="dash-avatar"><i class="bi bi-person-circle"></i></div>
-        <div>
-            <h4 class="mb-0 fw-bold text-white">
-                <i class="bi bi-hand-thumbs-up me-2"></i>Welcome, @Model.PatientName!
-            </h4>
-            <p class="mb-0 text-white opacity-75 small"><i class="bi bi-calendar-heart me-1"></i>Book your outpatient appointment below</p>
+<style>
+    /* Modern Dashboard Styles */
+    body {
+        background: #f5f7fa;
+    }
+
+    .dashboard-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 1.5rem;
+    }
+
+    /* Welcome Section */
+    .welcome-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        padding: 2rem;
+        color: white;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+
+    .welcome-section h2 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .welcome-section p {
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+
+    /* Search and Filter Section */
+    .filter-section {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .search-box {
+        position: relative;
+    }
+
+    .search-box input {
+        border-radius: 50px;
+        padding: 0.75rem 1.25rem 0.75rem 3rem;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+
+    .search-box input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+    }
+
+    .search-box i {
+        position: absolute;
+        left: 1.25rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        font-size: 1.1rem;
+    }
+
+    .filter-btn {
+        border-radius: 50px;
+        padding: 0.75rem 1.5rem;
+        border: 2px solid #e9ecef;
+        background: white;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+
+    .filter-btn:hover, .filter-btn.active {
+        border-color: #667eea;
+        background: #667eea;
+        color: white;
+    }
+
+    /* Section Headers */
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .section-header h4 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin: 0;
+    }
+
+    .view-history-btn {
+        background: transparent;
+        border: 2px solid #667eea;
+        color: #667eea;
+        border-radius: 50px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .view-history-btn:hover {
+        background: #667eea;
+        color: white;
+    }
+
+    /* Doctor Cards - Compact Modern Design */
+    .doctors-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.25rem;
+        margin-bottom: 2rem;
+    }
+
+    .doctor-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.25rem;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: 2px solid transparent;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .doctor-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+        border-color: #667eea;
+    }
+
+    .doctor-card.previously-visited::before {
+        content: "★";
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        color: #ffc107;
+        font-size: 1.5rem;
+    }
+
+    .doctor-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .doctor-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .doctor-info {
+        flex-grow: 1;
+    }
+
+    .doctor-name {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin-bottom: 0.25rem;
+    }
+
+    .doctor-specialty {
+        font-size: 0.9rem;
+        color: #718096;
+    }
+
+    .doctor-details {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .detail-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.9rem;
+    }
+
+    .detail-label {
+        color: #718096;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .detail-value {
+        font-weight: 600;
+        color: #2d3748;
+    }
+
+    .fee-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .availability-badge {
+        background: #d4edda;
+        color: #155724;
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .availability-badge.full {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .hospital-name {
+        font-size: 0.85rem;
+        color: #667eea;
+        font-weight: 600;
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid #e9ecef;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Recent Bookings */
+    .recent-bookings {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .booking-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        border-radius: 10px;
+        background: #f8f9fa;
+        margin-bottom: 0.75rem;
+        transition: all 0.3s ease;
+    }
+
+    .booking-item:hover {
+        background: #e9ecef;
+    }
+
+    .booking-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .booking-token {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    .booking-token.done {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    }
+
+    .booking-info {
+        flex-grow: 1;
+    }
+
+    .booking-doctor {
+        font-weight: 700;
+        color: #2d3748;
+        margin-bottom: 0.25rem;
+    }
+
+    .booking-hospital {
+        font-size: 0.85rem;
+        color: #718096;
+    }
+
+    .booking-date {
+        font-size: 0.85rem;
+        color: #718096;
+        text-align: right;
+    }
+
+    .booking-status {
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .status-today {
+        background: #cfe2ff;
+        color: #084298;
+    }
+
+    .status-done {
+        background: #d1e7dd;
+        color: #0f5132;
+    }
+
+    .status-upcoming {
+        background: #fff3cd;
+        color: #664d03;
+    }
+
+    /* History Modal/Offcanvas */
+    .history-offcanvas {
+        width: 500px !important;
+    }
+
+    .history-item {
+        border-bottom: 1px solid #e9ecef;
+        padding: 1rem 0;
+    }
+
+    .history-item:last-child {
+        border-bottom: none;
+    }
+
+    .queue-alert {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-top: 0.5rem;
+        animation: pulse 2s infinite;
+    }
+
+    @@keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.8; }
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #718096;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        opacity: 0.3;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state h5 {
+        color: #2d3748;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .dashboard-container {
+            padding: 1rem;
+        }
+
+        .welcome-section {
+            padding: 1.5rem;
+        }
+
+        .welcome-section h2 {
+            font-size: 1.5rem;
+        }
+
+        .doctors-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .filter-section {
+            padding: 1rem;
+        }
+
+        .filter-btn {
+            font-size: 0.85rem;
+            padding: 0.5rem 1rem;
+        }
+
+        .history-offcanvas {
+            width: 100% !important;
+        }
+    }
+
+    @@media (min-width: 769px) and (max-width: 1024px) {
+        .doctors-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+
+<div class="dashboard-container">
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+        <h2><i class="bi bi-hand-wave me-2"></i>Welcome, @Model.PatientName!</h2>
+        <p>Find and book appointments with top doctors</p>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="filter-section">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="search-box">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="doctorSearch" class="form-control" placeholder="Search doctors, hospitals, specialties...">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex gap-2 flex-wrap">
+                    <button class="filter-btn active" data-filter="all">All Doctors</button>
+                    <button class="filter-btn" data-filter="available">Available Today</button>
+                    <button class="filter-btn" data-filter="visited">Previously Visited</button>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- ── My Bookings ── -->
-@if (Model.MyBookings.Any())
-{
-    <div class="section-title mb-4">
-        <i class="bi bi-calendar2-check-fill text-primary me-2"></i>
-        <span class="fw-bold">My Bookings</span>
-        <span class="badge bg-primary ms-2">@Model.MyBookings.Count</span>
-    </div>
-    <div class="row g-4 mb-4">
-        @foreach (var b in Model.MyBookings)
+    <!-- Recent Bookings Section -->
+    @if (Model.MyBookings.Any())
+    {
+        var recentBookings = Model.MyBookings
+            .Where(b => b.BookingDate.Date >= DateTime.Today || (b.BookingDate.Date == DateTime.Today.AddDays(-1) && !b.IsDone))
+            .OrderByDescending(b => b.BookingDate)
+            .Take(3)
+            .ToList();
+
+        @if (recentBookings.Any())
         {
-            var isPast  = b.BookingDate.Date < DateTime.Today;
-            var isToday = b.BookingDate.Date == DateTime.Today;
+            <div class="recent-bookings mb-4">
+                <div class="section-header">
+                    <h4><i class="bi bi-clock-history me-2"></i>Recent Bookings</h4>
+                    @if (Model.MyBookings.Count > 3)
+                    {
+                        <button class="view-history-btn" data-bs-toggle="offcanvas" data-bs-target="#bookingHistory">
+                            <i class="bi bi-list-ul me-1"></i>View History
+                        </button>
+                    }
+                </div>
 
-            <div class="col-sm-6 col-lg-4">
-                <div class="booking-card @(b.IsDone ? "booking-done" : isToday ? "booking-today" : isPast ? "booking-past" : "")">
+                @foreach (var b in recentBookings)
+                {
+                    var isToday = b.BookingDate.Date == DateTime.Today;
+                    var statusClass = b.IsDone ? "done" : isToday ? "today" : "upcoming";
 
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div>
-                            <span class="booking-hospital">
-                                <i class="bi bi-hospital-fill me-1"></i>@b.HospitalName
+                    <div class="booking-item">
+                        <div class="booking-token @statusClass">
+                            #@b.TokenNumber
+                        </div>
+                        <div class="booking-info">
+                            <div class="booking-doctor">Dr. @b.DoctorName</div>
+                            <div class="booking-hospital"><i class="bi bi-hospital me-1"></i>@b.HospitalName</div>
+                            @if (isToday && !b.IsDone && b.DoneBeforeMe == b.TokenNumber - 1)
+                            {
+                                <div class="queue-alert">
+                                    <i class="bi bi-exclamation-circle me-1"></i>You're Next!
+                                </div>
+                            }
+                        </div>
+                        <div class="text-end">
+                            <div class="booking-date">
+                                <i class="bi bi-calendar3 me-1"></i>@b.BookingDate.ToString("dd MMM")
+                            </div>
+                            <span class="booking-status status-@statusClass mt-2 d-inline-block">
+                                @if (b.IsDone)
+                                {
+                                    <i class="bi bi-check-circle me-1"></i><text>Completed</text>
+                                }
+                                else if (isToday)
+                                {
+                                    <i class="bi bi-clock me-1"></i><text>Today</text>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-calendar-event me-1"></i><text>Upcoming</text>
+                                }
                             </span>
                         </div>
-                        <span class="token-badge @(b.IsDone ? "token-done-badge" : "")">
-                            <i class="bi bi-ticket-fill me-1"></i>Token #@b.TokenNumber
+                    </div>
+                }
+            </div>
+        }
+    }
+
+    <!-- Available Doctors Section -->
+    <div class="section-header">
+        <h4><i class="bi bi-hospital me-2"></i>Available Doctors</h4>
+        <span class="badge bg-primary" style="font-size: 1rem; padding: 0.5rem 1rem;">@Model.Hospitals.Count</span>
+    </div>
+
+    @if (!Model.Hospitals.Any())
+    {
+        <div class="empty-state">
+            <i class="bi bi-hospital"></i>
+            <h5>No Doctors Available</h5>
+            <p>Please check back later or contact support</p>
+        </div>
+    }
+    else
+    {
+        <div class="doctors-grid" id="doctorsGrid">
+            @foreach (var h in Model.Hospitals)
+            {
+                var initials = string.Join("", h.DoctorName.Split(' ').Select(n => n.FirstOrDefault()));
+                var isAvailable = h.TodayBookingCount < 50; // Assuming max 50 bookings per day
+                var isPreviouslyVisited = h.PreviouslyBooked;
+
+                <div class="doctor-card @(isPreviouslyVisited ? "previously-visited" : "")" 
+                     data-hospital-id="@h.Id"
+                     data-doctor="@h.DoctorName.ToLower()"
+                     data-hospital="@h.HospitalName.ToLower()"
+                     data-available="@isAvailable.ToString().ToLower()"
+                     data-visited="@isPreviouslyVisited.ToString().ToLower()">
+                    
+                    <div class="doctor-header">
+                        <div class="doctor-avatar">@initials</div>
+                        <div class="doctor-info">
+                            <div class="doctor-name">Dr. @h.DoctorName</div>
+                            <div class="doctor-specialty">General Physician</div>
+                        </div>
+                    </div>
+
+                    <div class="doctor-details">
+                        <div class="detail-row">
+                            <span class="detail-label">
+                                <i class="bi bi-currency-rupee"></i>
+                                Consultation Fee
+                            </span>
+                            @if (h.NewPatientFee > 0)
+                            {
+                                <span class="fee-badge">₹@h.NewPatientFee.ToString("N0")</span>
+                            }
+                            else
+                            {
+                                <span class="fee-badge" style="background: #6c757d;">Fee Not Configured</span>
+                            }
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">
+                                <i class="bi bi-people"></i>
+                                Today's Bookings
+                            </span>
+                            <span class="availability-badge @(!isAvailable ? "full" : "")">
+                                @h.TodayBookingCount @(isAvailable ? "booked" : "Full")
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="hospital-name">
+                        <i class="bi bi-hospital"></i>
+                        @h.HospitalName
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- Booking History Offcanvas -->
+<div class="offcanvas offcanvas-end history-offcanvas" tabindex="-1" id="bookingHistory">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title"><i class="bi bi-clock-history me-2"></i>Booking History</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body">
+        @if (Model.MyBookings.Any())
+        {
+            var allBookings = Model.MyBookings.OrderByDescending(b => b.BookingDate).ToList();
+            
+            @foreach (var b in allBookings)
+            {
+                var isToday = b.BookingDate.Date == DateTime.Today;
+                var isPast = b.BookingDate.Date < DateTime.Today;
+
+                <div class="history-item">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <div class="fw-bold">Dr. @b.DoctorName</div>
+                            <div class="small text-muted">@b.HospitalName</div>
+                        </div>
+                        <span class="badge" style="background: @(b.IsDone ? "#28a745" : isToday ? "#0d6efd" : "#6c757d")">
+                            Token #@b.TokenNumber
                         </span>
                     </div>
-
-                    <div class="booking-doctor">
-                        <i class="bi bi-person-badge me-1"></i><strong>Dr. @b.DoctorName</strong>
-                    </div>
-
-                    <div class="booking-date mt-2">
+                    <div class="small text-muted">
                         <i class="bi bi-calendar3 me-1"></i>@b.BookingDate.ToString("dd MMM yyyy")
                         @if (b.IsDone)
                         {
-                            <span class="badge bg-success ms-1"><i class="bi bi-check-circle me-1"></i>Done</span>
+                            <span class="ms-2"><i class="bi bi-check-circle text-success me-1"></i>Completed</span>
                         }
                         else if (isToday)
                         {
-                            <span class="badge bg-primary ms-1"><i class="bi bi-clock-fill me-1"></i>Today</span>
-                        }
-                        else if (isPast)
-                        {
-                            <span class="badge bg-secondary ms-1"><i class="bi bi-archive me-1"></i>Past</span>
+                            <span class="ms-2"><i class="bi bi-clock text-primary me-1"></i>Today</span>
                         }
                     </div>
-
-                    <!-- Queue status for today's pending bookings -->
                     @if (isToday && !b.IsDone)
                     {
-                        <div class="queue-status mt-3 mb-0">
-                            <i class="bi bi-people-fill me-1"></i>
-                            <strong>@b.DoneBeforeMe</strong> done before you &nbsp;·&nbsp;
-                            <i class="bi bi-ticket-fill me-1"></i><strong>#@b.TokenNumber</strong>
-                            @if (b.DoneBeforeMe == b.TokenNumber - 1)
-                            {
-                                <span class="badge bg-danger ms-1 blink"><i class="bi bi-exclamation-diamond-fill me-1"></i>You're Next!</span>
-                            }
+                        <div class="mt-2 small">
+                            <span class="badge bg-info">@b.DoneBeforeMe patients ahead</span>
                         </div>
                     }
-
                 </div>
-            </div>
+            }
         }
-    </div>
-}
-
-<!-- ── Hospital List ── -->
-<div class="section-title mb-4">
-    <i class="bi bi-hospital-fill text-primary me-2"></i>
-    <span class="fw-bold">Available Hospitals</span>
-    <span class="badge bg-primary ms-2">@Model.Hospitals.Count</span>
-</div>
-
-@if (!Model.Hospitals.Any())
-{
-    <div class="empty-state">
-        <div class="mb-3">
-            <i class="bi bi-building-slash"></i>
-        </div>
-        <p class="fw-semibold">No hospitals registered yet.</p>
-        <p class="text-muted small">Check back soon or contact support.</p>
-    </div>
-}
-else
-{
-    <div class="mb-4">
-        <div class="input-group">
-            <span class="input-group-text bg-white border-end-0">
-                <i class="bi bi-search text-muted"></i>
-            </span>
-            <input type="text" id="hospitalSearch" class="form-control border-start-0"
-                   placeholder="Search hospital or doctor…" />
-        </div>
-    </div>
-
-    <div class="row g-4" id="hospitalGrid">
-        @foreach (var h in Model.Hospitals)
+        else
         {
-            <div class="col-sm-6 col-lg-4 hospital-item"
-                 data-name="@h.HospitalName.ToLower()"
-                 data-doctor="@h.DoctorName.ToLower()">
-                <div class="hosp-card @(h.PreviouslyBooked ? "hosp-card-pinned" : "")">
-                    @if (h.PreviouslyBooked)
-                    {
-                        <div class="pinned-label">
-                            <i class="bi bi-bookmark-star-fill me-1"></i>Previously Visited
-                        </div>
-                    }
-                    <div class="hosp-card-body">
-                        <div class="hosp-name">
-                            <i class="bi bi-hospital-fill me-1 text-primary"></i>@h.HospitalName
-                        </div>
-                        <div class="hosp-doctor mt-2">
-                            <i class="bi bi-person-badge me-1"></i>Dr. @h.DoctorName
-                        </div>
-                        <div class="hosp-address text-muted small mt-2">
-                            <i class="bi bi-geo-alt-fill me-1"></i>@h.Address
-                        </div>
-                        <div class="hosp-mobile text-muted small mt-1">
-                            <i class="bi bi-telephone-fill me-1"></i>@h.MobileNumber
-                        </div>
-                    </div>
-                    <div class="hosp-card-footer">
-                        @if (h.TodayBookingCount > 0)
-                        {
-                            <span class="op-count-badge">
-                                <i class="bi bi-people-fill me-1"></i>
-                                Today: <strong>@h.TodayBookingCount</strong> booked
-                            </span>
-                        }
-                        else
-                        {
-                            <span class="op-count-badge op-count-empty">
-                                <i class="bi bi-calendar-check me-1"></i>No bookings today
-                            </span>
-                        }
-                        <a asp-controller="Booking" asp-action="Book"
-                           asp-route-hospitalId="@h.Id"
-                           class="btn btn-primary btn-sm book-btn">
-                            <i class="bi bi-calendar-plus me-1"></i>Book OP
-                        </a>
-                    </div>
-                </div>
+            <div class="empty-state">
+                <i class="bi bi-calendar-x"></i>
+                <h6>No Booking History</h6>
+                <p class="small">Your booking history will appear here</p>
             </div>
         }
     </div>
-}
+</div>
 
 @section Scripts {
 <script>
-    document.getElementById('hospitalSearch').addEventListener('input', function () {
-        const q = this.value.toLowerCase().trim();
-        document.querySelectorAll('.hospital-item').forEach(el => {
-            const match = !q || el.dataset.name.includes(q) || el.dataset.doctor.includes(q);
-            el.style.display = match ? '' : 'none';
+    $(document).ready(function() {
+        // Doctor card click - Navigate to booking page
+        $('.doctor-card').on('click', function() {
+            const hospitalId = $(this).data('hospital-id');
+            window.location.href = `/Booking/Book?hospitalId=${hospitalId}`;
         });
+
+        // Search functionality
+        $('#doctorSearch').on('input', function() {
+            const searchTerm = $(this).val().toLowerCase().trim();
+            filterDoctors();
+        });
+
+        // Filter buttons
+        $('.filter-btn').on('click', function() {
+            $('.filter-btn').removeClass('active');
+            $(this).addClass('active');
+            filterDoctors();
+        });
+
+        function filterDoctors() {
+            const searchTerm = $('#doctorSearch').val().toLowerCase().trim();
+            const activeFilter = $('.filter-btn.active').data('filter');
+
+            $('.doctor-card').each(function() {
+                const $card = $(this);
+                const doctorName = $card.data('doctor');
+                const hospitalName = $card.data('hospital');
+                const isAvailable = $card.data('available') === 'true';
+                const isVisited = $card.data('visited') === 'true';
+
+                // Search filter
+                const matchesSearch = !searchTerm || 
+                    doctorName.includes(searchTerm) || 
+                    hospitalName.includes(searchTerm);
+
+                // Category filter
+                let matchesFilter = true;
+                if (activeFilter === 'available') {
+                    matchesFilter = isAvailable;
+                } else if (activeFilter === 'visited') {
+                    matchesFilter = isVisited;
+                }
+
+                // Show/hide card
+                if (matchesSearch && matchesFilter) {
+                    $card.show();
+                } else {
+                    $card.hide();
+                }
+            });
+
+            // Show empty state if no results
+            const visibleCards = $('.doctor-card:visible').length;
+            if (visibleCards === 0 && !$('.empty-state').length) {
+                $('#doctorsGrid').append(`
+                    <div class="empty-state col-12">
+                        <i class="bi bi-search"></i>
+                        <h5>No Doctors Found</h5>
+                        <p>Try adjusting your search or filters</p>
+                    </div>
+                `);
+            } else if (visibleCards > 0) {
+                $('.empty-state').remove();
+            }
+        }
     });
 </script>
 }
+
+<!-- Made with Bob -->

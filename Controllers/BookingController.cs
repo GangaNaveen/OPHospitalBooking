@@ -555,7 +555,11 @@ namespace HospitalOPBooking.Controllers
 
             var list = new List<HospitalListItem>();
             using (var cmd = new SqlCommand(
-                "SELECT Id, HospitalName, DoctorName, Address, MobileNumber FROM Hospitals ORDER BY HospitalName", conn))
+                @"SELECT h.Id, h.HospitalName, h.DoctorName, h.Address, h.MobileNumber,
+                         ISNULL(d.NewPatientFee, 0) AS NewPatientFee
+                  FROM Hospitals h
+                  LEFT JOIN Doctors d ON d.HospitalId = h.Id AND d.Name = h.DoctorName AND d.IsActive = 1
+                  ORDER BY h.HospitalName", conn))
             {
                 using var r = cmd.ExecuteReader();
                 while (r.Read())
@@ -569,7 +573,8 @@ namespace HospitalOPBooking.Controllers
                         Address           = r.GetString(3),
                         MobileNumber      = r.GetString(4),
                         PreviouslyBooked  = bookedIds.Contains(hid),
-                        TodayBookingCount = todayCounts.TryGetValue(hid, out var c) ? c : 0
+                        TodayBookingCount = todayCounts.TryGetValue(hid, out var c) ? c : 0,
+                        NewPatientFee     = r.GetDecimal(5)
                     });
                 }
             }
