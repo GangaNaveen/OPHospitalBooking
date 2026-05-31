@@ -138,6 +138,18 @@ namespace HospitalOPBooking.Data
                     WHERE TABLE_NAME='OPBookings' AND COLUMN_NAME='BookingForName')
                 ALTER TABLE OPBookings ADD BookingForName NVARCHAR(100) NOT NULL DEFAULT '';
 
+                -- Add ConsultationFee column if upgrading from older schema
+                IF NOT EXISTS (
+                    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_NAME='OPBookings' AND COLUMN_NAME='ConsultationFee')
+                ALTER TABLE OPBookings ADD ConsultationFee DECIMAL(18,2) NOT NULL DEFAULT 0;
+
+                -- Add FeeCategory column if upgrading from older schema
+                IF NOT EXISTS (
+                    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_NAME='OPBookings' AND COLUMN_NAME='FeeCategory')
+                ALTER TABLE OPBookings ADD FeeCategory NVARCHAR(100) NOT NULL DEFAULT '';
+
                 -- Family members table
                 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='FamilyMembers' AND xtype='U')
                 CREATE TABLE FamilyMembers (

@@ -299,14 +299,99 @@ namespace HospitalOPBooking.Controllers
                 bookingForName = fm.Name;
             }
 
-            // ── Step 7: save ──────────────────────────────────────────────────
+            // ── Step 7: Server-side fee calculation and validation ────────────
+            decimal consultationFee = 0;
+            string feeCategory = "New Patient";
+
+            // Recalculate fee on server to prevent tampering
+            using (var conn = _db.GetConnection())
+            {
+                conn.Open();
+
+                // Get doctor id + NewPatientFee
+                int? doctorId = null;
+                decimal newPatientFee = 0;
+                using (var cmd = new SqlCommand(
+                    "SELECT Id, NewPatientFee FROM Doctors WHERE HospitalId=@Hid AND Name=@Name AND IsActive=1", conn))
+                {
+                    cmd.Parameters.AddWithValue("@Hid", hid.Value);
+                    cmd.Parameters.AddWithValue("@Name", model.DoctorName);
+                    using var r = cmd.ExecuteReader();
+                    if (r.Read())
+                    {
+                        doctorId = r.GetInt32(0);
+                        newPatientFee = r.GetDecimal(1);
+                    }
+                }
+
+                if (doctorId == null)
+                {
+                    ModelState.AddModelError("DoctorName", "Doctor not found.");
+                    return View(model);
+                }
+
+                // Load dynamic fee rules
+                var rules = new List<DoctorFeeRule>();
+                using (var cmd = new SqlCommand(
+                    "SELECT FromDay, ToDay, Fee FROM DoctorFeeRules WHERE DoctorId=@Did ORDER BY FromDay", conn))
+                {
+                    cmd.Parameters.AddWithValue("@Did", doctorId.Value);
+                    using var r = cmd.ExecuteReader();
+                    while (r.Read())
+                        rules.Add(new DoctorFeeRule { FromDay = r.GetInt32(0), ToDay = r.GetInt32(1), Fee = r.GetDecimal(2) });
+                }
+
+                var doc = new DoctorViewModel { NewPatientFee = newPatientFee, FeeRules = rules };
+
+                // Get last visit date for fee calculation
+                DateTime? lastVisit = null;
+                var lastVisitSql = familyMemberId.HasValue && familyMemberId.Value > 0
+                    ? @"SELECT MAX(BookingDate) FROM OPBookings
+                        WHERE HospitalId=@Hid AND DoctorName=@Doc
+                          AND PatientId=@Pid AND FamilyMemberId=@Fid AND Status='Done'"
+                    : @"SELECT MAX(BookingDate) FROM OPBookings
+                        WHERE HospitalId=@Hid AND DoctorName=@Doc
+                          AND PatientId=@Pid AND (FamilyMemberId IS NULL OR FamilyMemberId=0)
+                          AND Status='Done'";
+
+                using (var cmd = new SqlCommand(lastVisitSql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Hid", hid.Value);
+                    cmd.Parameters.AddWithValue("@Doc", model.DoctorName);
+                    cmd.Parameters.AddWithValue("@Pid", pid.Value);
+                    if (familyMemberId.HasValue && familyMemberId.Value > 0)
+                        cmd.Parameters.AddWithValue("@Fid", familyMemberId.Value);
+                    var result = cmd.ExecuteScalar();
+                    if (result != null && result != DBNull.Value)
+                        lastVisit = Convert.ToDateTime(result);
+                }
+
+                // Calculate fee based on rules
+                consultationFee = doc.CalculateFee(lastVisit, model.BookingDate);
+                feeCategory = doc.GetFeeLabel(lastVisit, model.BookingDate);
+            }
+
+            // Validate that fee is not zero (unless it's a free consultation)
+            if (consultationFee < 0)
+            {
+                ModelState.AddModelError("", "Invalid consultation fee calculated.");
+                return View(model);
+            }
+
+            // Optional: Compare with user-submitted fee and allow manual override if within reasonable range
+            // For now, we trust the server-calculated fee
+            // If you want to allow manual editing, you can compare model.ConsultationFee with consultationFee
+            // and accept it if it's within a reasonable range (e.g., ±20%)
+
+            // ── Step 8: save ──────────────────────────────────────────────────
             int token = OPCount(hid.Value, model.DoctorName, model.BookingDate) + 1;
             SaveBooking(pid.Value, hid.Value, model.DoctorName, model.BookingDate,
-                        token, familyMemberId, bookingForName, bookedByHospital: true);
+                        token, familyMemberId, bookingForName, bookedByHospital: true,
+                        consultationFee, feeCategory);
 
             TempData["BookSuccess"] =
                 $"Booked for {bookingForName} — Token #{token}, Dr. {model.DoctorName}, " +
-                $"{model.BookingDate:dd MMM yyyy}";
+                $"{model.BookingDate:dd MMM yyyy} — Fee: ₹{consultationFee:F2}";
             return RedirectToAction("Dashboard");
         }
 
@@ -710,7 +795,23 @@ namespace HospitalOPBooking.Controllers
 
             var fee   = doc.CalculateFee(lastVisit, bDate);
             var label = doc.GetFeeLabel(lastVisit, bDate);
-            return Json(new { fee, label });
+            
+            // Calculate days since last visit
+            int? daysSinceLastVisit = null;
+            string lastVisitDateFormatted = null;
+            if (lastVisit.HasValue)
+            {
+                daysSinceLastVisit = (bDate.Date - lastVisit.Value.Date).Days;
+                lastVisitDateFormatted = lastVisit.Value.ToString("dd MMM yyyy");
+            }
+            
+            return Json(new {
+                fee,
+                label,
+                lastVisitDate = lastVisitDateFormatted,
+                daysSinceLastVisit = daysSinceLastVisit,
+                isNewPatient = !lastVisit.HasValue
+            });
         }
 
         [HttpGet]
@@ -825,14 +926,15 @@ namespace HospitalOPBooking.Controllers
         }
 
         private int SaveBooking(int patientId, int hospitalId, string doctorName,
-                                DateTime date, int token, int? familyMemberId, string bookingForName, bool bookedByHospital)
+                                DateTime date, int token, int? familyMemberId, string bookingForName, bool bookedByHospital,
+                                decimal consultationFee = 0, string feeCategory = "")
         {
             using var conn = _db.GetConnection(); conn.Open();
             using var cmd  = new SqlCommand(
                 @"INSERT INTO OPBookings
-                    (PatientId, HospitalId, DoctorName, BookingDate, TokenNumber, BookedByHospital, FamilyMemberId, BookingForName)
+                    (PatientId, HospitalId, DoctorName, BookingDate, TokenNumber, BookedByHospital, FamilyMemberId, BookingForName, ConsultationFee, FeeCategory)
                   OUTPUT INSERTED.Id
-                  VALUES (@Pid, @Hid, @Doc, @Date, @Token, @ByHosp, @Fid, @ForName)", conn);
+                  VALUES (@Pid, @Hid, @Doc, @Date, @Token, @ByHosp, @Fid, @ForName, @Fee, @FeeCategory)", conn);
             cmd.Parameters.AddWithValue("@Pid",    patientId);
             cmd.Parameters.AddWithValue("@Hid",    hospitalId);
             cmd.Parameters.AddWithValue("@Doc",    doctorName);
@@ -841,6 +943,8 @@ namespace HospitalOPBooking.Controllers
             cmd.Parameters.AddWithValue("@ByHosp", bookedByHospital ? 1 : 0);
             cmd.Parameters.AddWithValue("@Fid",    familyMemberId.HasValue ? (object)familyMemberId.Value : DBNull.Value);
             cmd.Parameters.AddWithValue("@ForName", bookingForName ?? "");
+            cmd.Parameters.AddWithValue("@Fee",    consultationFee);
+            cmd.Parameters.AddWithValue("@FeeCategory", feeCategory ?? "");
             return (int)cmd.ExecuteScalar()!;
         }
 

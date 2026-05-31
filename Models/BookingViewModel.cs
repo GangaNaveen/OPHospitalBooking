@@ -29,5 +29,12 @@ namespace HospitalOPBooking.Models
 
         public int ExistingOPCount { get; set; }
         public int NextToken => ExistingOPCount + 1;
+
+        // ── Consultation Fee (calculated and saved) ───────────────────────────
+        /// <summary>Calculated consultation fee based on doctor's fee rules and patient history.</summary>
+        public decimal ConsultationFee { get; set; }
+
+        /// <summary>Fee category/label (e.g., "New Patient", "Revisit (5d) — 0–7 days").</summary>
+        public string FeeCategory { get; set; } = string.Empty;
     }
 }

@@ -21,6 +21,8 @@
             @Html.AntiForgeryToken()
             <input type="hidden" asp-for="HospitalId" />
             <input type="hidden" asp-for="HospitalName" />
+            <input type="hidden" asp-for="ConsultationFee" id="consultationFeeHidden" />
+            <input type="hidden" asp-for="FeeCategory" id="feeCategoryHidden" />
 
             <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
 
@@ -40,20 +42,36 @@
                 <span asp-validation-for="DoctorName" class="text-danger small"></span>
             </div>
 
-            <!-- Doctor Fee Display -->
-            <div id="feePanel" class="fee-panel mb-4 d-none">
-                <div class="row g-2">
-                    <div class="col-6">
-                        <div class="text-muted small mb-1"><i class="bi bi-tag-fill me-1"></i>Consultation Fee</div>
-                        <div class="fw-bold text-primary" id="feeAmount" style="font-size: 1.2rem;">
-                            <i class="bi bi-currency-rupee"></i><span id="feeValue">0</span>
-                        </div>
-                        <div class="text-muted small mt-1" id="feeType">New Patient</div>
-                    </div>
-                    <div class="col-6">
-                        <div class="text-muted small mb-1"><i class="bi bi-info-circle-fill me-1"></i>Your Status</div>
-                        <div class="fw-bold" id="patientStatus" style="font-size: 1.2rem;">
-                            <span class="badge bg-primary" id="patientStatusBadge">First Time</span>
+            <!-- Consultation Fee Display -->
+            <div id="consultationFeePanel" class="mb-4 d-none">
+                <div class="card border-primary">
+                    <div class="card-body p-3">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold mb-2">
+                                    <i class="bi bi-currency-rupee text-primary me-1"></i>Consultation Fee
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">₹</span>
+                                    <input type="number" class="form-control form-control-lg"
+                                           id="consultationFeeInput"
+                                           placeholder="0.00"
+                                           readonly
+                                           style="font-weight: 600; font-size: 1.25rem; background-color: #f8f9fa;" />
+                                </div>
+                                <small class="text-muted">Consultation fee as per doctor's rate</small>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="alert alert-info mb-0 mt-3 mt-md-0" style="background-color: #e7f3ff; border-color: #b3d9ff;">
+                                    <div class="d-flex align-items-start">
+                                        <i class="bi bi-info-circle-fill me-2 mt-1"></i>
+                                        <div>
+                                            <strong id="feeCategoryLabel">Calculating...</strong>
+                                            <div id="feeCategoryDetails" class="small mt-1"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -142,6 +160,9 @@
         let doctorData     = [];   // full doctor list from server
         let patientSelected = false;  // tracks whether a patient/family chip is active
         let doctorAvailable = false;  // starts FALSE — must be confirmed by availability check
+        let currentConsultationFee = 0;
+        let currentFeeCategory = '';
+        let selectedFamilyMemberId = 0;
 
         // ── Helpers ───────────────────────────────────────────────────────────
         function updateSubmitState() {
@@ -192,6 +213,8 @@
             document.getElementById('opCountPanel').classList.add('d-none');
             updateSubmitState();
             refreshAvailabilityAndCount();
+            // Calculate consultation fee when doctor is selected
+            calculateConsultationFee();
         }
 
         // ── Date change ───────────────────────────────────────────────────────
@@ -316,11 +339,14 @@
                 ch.addEventListener('click', function () {
                     wrapper.querySelectorAll('.doctor-chip').forEach(x => x.classList.remove('active'));
                     this.classList.add('active');
-                    document.getElementById('FamilyMemberId').value = this.dataset.fid;
+                    selectedFamilyMemberId = parseInt(this.dataset.fid);
+                    document.getElementById('FamilyMemberId').value = selectedFamilyMemberId;
                     document.getElementById('familyMsg').textContent = '';
                     patientSelected = true;
                     document.getElementById('patientError').classList.add('d-none');
                     updateSubmitState();
+                    // Recalculate fee when family member selection changes
+                    calculateConsultationFee();
                 });
             });
 
@@ -377,15 +403,75 @@
         // Trigger availability check on load if doctor + date already set
         if (selectedDoctor && selectedDate) refreshAvailabilityAndCount();
 
+        // ── Calculate Consultation Fee ────────────────────────────────────────────
+        function calculateConsultationFee() {
+            // Only calculate if we have doctor selected
+            if (!selectedDoctor) {
+                document.getElementById('consultationFeePanel').classList.add('d-none');
+                return;
+            }
+
+            // Get booking date
+            const bookingDate = document.getElementById('bookingDate').value || new Date().toISOString().split('T')[0];
+
+            // Show loading state
+            document.getElementById('feeCategoryLabel').textContent = 'Calculating fee...';
+            document.getElementById('feeCategoryDetails').innerHTML = '';
+            document.getElementById('consultationFeeInput').value = '';
+            document.getElementById('consultationFeePanel').classList.remove('d-none');
+
+            // Call API to calculate fee
+            fetch(`/Booking/GetConsultationFee?hospitalId=${hospitalId}&doctorName=${encodeURIComponent(selectedDoctor)}&familyMemberId=${selectedFamilyMemberId}&bookingDate=${bookingDate}`)
+                .then(r => r.json())
+                .then(data => {
+                    currentConsultationFee = data.fee;
+                    currentFeeCategory = data.label;
+                    
+                    // Build user-friendly details message
+                    let details = '';
+                    if (data.isNewPatient) {
+                        details = 'No previous visit found with this doctor.';
+                    } else {
+                        // Show last visit date and days since
+                        details = `<strong>Last Visit:</strong> ${data.lastVisitDate} `;
+                        details += `<span class="badge bg-info text-dark ms-1">${data.daysSinceLastVisit} ${data.daysSinceLastVisit === 1 ? 'day' : 'days'} ago</span>`;
+                    }
+                    
+                    updateFeeDisplay(data.fee, data.label, details);
+                })
+                .catch(err => {
+                    console.error('Fee calculation failed:', err);
+                    document.getElementById('feeCategoryLabel').textContent = 'Unable to calculate fee';
+                    document.getElementById('feeCategoryDetails').innerHTML = 'Please contact hospital for fee information.';
+                    document.getElementById('consultationFeeInput').value = '';
+                });
+        }
+
+        function updateFeeDisplay(fee, label, details) {
+            document.getElementById('consultationFeeInput').value = fee.toFixed(2);
+            document.getElementById('feeCategoryLabel').textContent = label;
+            // Use innerHTML for details to support HTML formatting
+            document.getElementById('feeCategoryDetails').innerHTML = details;
+            document.getElementById('consultationFeePanel').classList.remove('d-none');
+            
+            // Update hidden fields
+            document.getElementById('consultationFeeHidden').value = fee;
+            document.getElementById('feeCategoryHidden').value = label;
+        }
+
+        // Note: Fee input is read-only for patients, so no manual editing event listener needed
+
         // ── Submit guard ──────────────────────────────────────────────────────
         document.getElementById('bookForm').addEventListener('submit', function (e) {
             let blocked = false;
+            const errors = [];
 
             // 1. Doctor must be selected
             if (!document.getElementById('selectedDoctor').value.trim()) {
                 e.preventDefault();
                 document.getElementById('doctorValidation').classList.remove('d-none');
                 document.getElementById('doctorList').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                errors.push('Please select a doctor');
                 blocked = true;
             }
 
@@ -394,6 +480,7 @@
                 e.preventDefault();
                 document.getElementById('patientError').classList.remove('d-none');
                 document.getElementById('familyArea').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                errors.push('Please select who this booking is for');
                 blocked = true;
             }
 
@@ -401,7 +488,31 @@
             if (!doctorAvailable) {
                 e.preventDefault();
                 document.getElementById('availPanel').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                errors.push('Doctor is not available on the selected date');
                 blocked = true;
+            }
+
+            // 4. Consultation fee validation
+            const feeInput = document.getElementById('consultationFeeInput');
+            const feeValue = parseFloat(feeInput?.value || '0');
+            if (feeInput && (isNaN(feeValue) || feeValue <= 0)) {
+                e.preventDefault();
+                errors.push('Please wait for consultation fee to be calculated');
+                if (feeInput) feeInput.focus();
+                blocked = true;
+            }
+
+            // Update hidden fields before submit
+            if (feeInput && feeValue > 0) {
+                document.getElementById('consultationFeeHidden').value = feeValue;
+                if (!document.getElementById('feeCategoryHidden').value) {
+                    document.getElementById('feeCategoryHidden').value = currentFeeCategory || 'Standard Fee';
+                }
+            }
+
+            // Show errors if any
+            if (blocked && errors.length > 0) {
+                alert('Please fix the following issues:\n\n• ' + errors.join('\n• '));
             }
         });
     </script>
